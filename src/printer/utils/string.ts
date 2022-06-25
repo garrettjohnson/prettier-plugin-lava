@@ -1,4 +1,4 @@
-import { LiquidAstPath, LiquidHtmlNode, LiquidParserOptions } from '~/types';
+import { LavaAstPath, LavaHtmlNode, LavaParserOptions } from '~/types';
 
 export function isWhitespace(source: string, loc: number): boolean {
   if (loc < 0 || loc >= source.length) return false;
@@ -15,7 +15,7 @@ export function bodyLines(str: string): string[] {
 }
 
 export function markupLines<
-  T extends Extract<LiquidHtmlNode, { markup: string }>,
+  T extends Extract<LavaHtmlNode, { markup: string }>,
 >(node: T): string[] {
   return node.markup.trim().split('\n');
 }
@@ -36,8 +36,8 @@ export function reindent(lines: string[], skipFirst = false): string[] {
 }
 
 export function originallyHadLineBreaks(
-  path: LiquidAstPath,
-  { locStart, locEnd }: LiquidParserOptions,
+  path: LavaAstPath,
+  { locStart, locEnd }: LavaParserOptions,
 ): boolean {
   const node = path.getValue();
   return hasLineBreakInRange(node.source, locStart(node), locEnd(node));

@@ -4,9 +4,9 @@ import {
   HtmlNode,
   HtmlSelfClosingElement,
   HtmlVoidElement,
-  LiquidHtmlNode,
-  LiquidParserOptions,
-  LiquidPrinter,
+  LavaHtmlNode,
+  LavaParserOptions,
+  LavaPrinter,
   NodeTypes,
 } from '~/types';
 import {
@@ -15,7 +15,7 @@ import {
   isHtmlNode,
   isVoidElement,
   isHtmlElement,
-  isLiquidNode,
+  isLavaNode,
   isNonEmptyArray,
   isPreLikeNode,
   hasNoCloseMarker,
@@ -23,7 +23,7 @@ import {
   shouldPreserveContent,
   isSelfClosing,
   isHtmlComment,
-  isMultilineLiquidTag,
+  isMultilineLavaTag,
   hasMeaningfulLackOfLeadingWhitespace,
   hasMeaningfulLackOfTrailingWhitespace,
 } from '~/printer/utils';
@@ -34,8 +34,8 @@ const {
 const { replaceTextEndOfLine } = doc.utils as any;
 
 export function printClosingTag(
-  node: LiquidHtmlNode,
-  options: LiquidParserOptions,
+  node: LavaHtmlNode,
+  options: LavaParserOptions,
 ) {
   return [
     hasNoCloseMarker(node) ? '' : printClosingTagStart(node, options),
@@ -44,8 +44,8 @@ export function printClosingTag(
 }
 
 export function printClosingTagStart(
-  node: LiquidHtmlNode,
-  options: LiquidParserOptions,
+  node: LavaHtmlNode,
+  options: LavaParserOptions,
 ) {
   return node.lastChild &&
     needsToBorrowParentClosingTagStartMarker(node.lastChild)
@@ -57,8 +57,8 @@ export function printClosingTagStart(
 }
 
 export function printClosingTagEnd(
-  node: LiquidHtmlNode,
-  options: LiquidParserOptions,
+  node: LavaHtmlNode,
+  options: LavaParserOptions,
 ) {
   return (
     node.next
@@ -73,8 +73,8 @@ export function printClosingTagEnd(
 }
 
 function printClosingTagPrefix(
-  node: LiquidHtmlNode,
-  options: LiquidParserOptions,
+  node: LavaHtmlNode,
+  options: LavaParserOptions,
 ) {
   return needsToBorrowLastChildClosingTagEndMarker(node)
     ? printClosingTagEndMarker(node.lastChild, options)
@@ -82,8 +82,8 @@ function printClosingTagPrefix(
 }
 
 export function printClosingTagSuffix(
-  node: LiquidHtmlNode,
-  options: LiquidParserOptions,
+  node: LavaHtmlNode,
+  options: LavaParserOptions,
 ) {
   return needsToBorrowParentClosingTagStartMarker(node)
     ? printClosingTagStartMarker(node.parentNode, options)
@@ -93,8 +93,8 @@ export function printClosingTagSuffix(
 }
 
 export function printClosingTagStartMarker(
-  node: LiquidHtmlNode | undefined,
-  options: LiquidParserOptions,
+  node: LavaHtmlNode | undefined,
+  options: LavaParserOptions,
 ) {
   if (!node) return '';
   /* istanbul ignore next */
@@ -119,8 +119,8 @@ export function printClosingTagStartMarker(
 }
 
 export function printClosingTagEndMarker(
-  node: LiquidHtmlNode | undefined,
-  options: LiquidParserOptions,
+  node: LavaHtmlNode | undefined,
+  options: LavaParserOptions,
 ) {
   if (!node) return '';
   if (shouldNotPrintClosingTag(node, options)) {
@@ -149,8 +149,8 @@ export function printClosingTagEndMarker(
 }
 
 function shouldNotPrintClosingTag(
-  node: LiquidHtmlNode,
-  options: LiquidParserOptions,
+  node: LavaHtmlNode,
+  options: LavaParserOptions,
 ) {
   return (
     !hasNoCloseMarker(node) &&
@@ -160,7 +160,7 @@ function shouldNotPrintClosingTag(
   );
 }
 
-export function needsToBorrowPrevClosingTagEndMarker(node: LiquidHtmlNode) {
+export function needsToBorrowPrevClosingTagEndMarker(node: LavaHtmlNode) {
   /**
    *     <p></p
    *     >123
@@ -171,7 +171,7 @@ export function needsToBorrowPrevClosingTagEndMarker(node: LiquidHtmlNode) {
    *     ^
    */
   return (
-    !isLiquidNode(node) &&
+    !isLavaNode(node) &&
     node.prev &&
     // node.prev.type !== 'docType' &&
     isHtmlNode(node.prev) &&
@@ -180,7 +180,7 @@ export function needsToBorrowPrevClosingTagEndMarker(node: LiquidHtmlNode) {
 }
 
 export function needsToBorrowLastChildClosingTagEndMarker(
-  node: LiquidHtmlNode,
+  node: LavaHtmlNode,
 ) {
   /**
    *     <p
@@ -198,7 +198,7 @@ export function needsToBorrowLastChildClosingTagEndMarker(
   );
 }
 
-export function needsToBorrowParentClosingTagStartMarker(node: LiquidHtmlNode) {
+export function needsToBorrowParentClosingTagStartMarker(node: LavaHtmlNode) {
   /**
    *     <p>
    *       123</p
@@ -214,13 +214,13 @@ export function needsToBorrowParentClosingTagStartMarker(node: LiquidHtmlNode) {
     isHtmlNode(node.parentNode) &&
     !node.next &&
     hasMeaningfulLackOfTrailingWhitespace(node) &&
-    !isLiquidNode(node) &&
+    !isLavaNode(node) &&
     (isTextLikeNode(getLastDescendant(node)) ||
-      isLiquidNode(getLastDescendant(node)))
+      isLavaNode(getLastDescendant(node)))
   );
 }
 
-export function needsToBorrowNextOpeningTagStartMarker(node: LiquidHtmlNode) {
+export function needsToBorrowNextOpeningTagStartMarker(node: LavaHtmlNode) {
   /**
    *     123<p
    *        ^^
@@ -248,7 +248,7 @@ function getPrettierIgnoreAttributeCommentData(value: string) {
   return match[1].split(/\s+/);
 }
 
-export function needsToBorrowParentOpeningTagEndMarker(node: LiquidHtmlNode) {
+export function needsToBorrowParentOpeningTagEndMarker(node: LavaHtmlNode) {
   /**
    *     <p
    *       >123
@@ -262,14 +262,14 @@ export function needsToBorrowParentOpeningTagEndMarker(node: LiquidHtmlNode) {
     isHtmlNode(node.parentNode) &&
     !node.prev &&
     hasMeaningfulLackOfLeadingWhitespace(node) &&
-    !isLiquidNode(node)
+    !isLavaNode(node)
   );
 }
 
 function printAttributes(
   path: AstPath<HtmlNode>,
-  options: LiquidParserOptions,
-  print: LiquidPrinter,
+  options: LavaParserOptions,
+  print: LavaPrinter,
 ) {
   const node = path.getValue();
   const { locStart, locEnd } = options;
@@ -316,7 +316,7 @@ function printAttributes(
       (isHtmlElement(node) && node.children.length > 0)) &&
       node.attributes &&
       node.attributes.length === 1 &&
-      !isMultilineLiquidTag(node.attributes[0]));
+      !isMultilineLavaTag(node.attributes[0]));
 
   const forceBreakAttrContent =
     node.source
@@ -372,7 +372,7 @@ function printAttributes(
   return parts;
 }
 
-function printOpeningTagEnd(node: LiquidHtmlNode) {
+function printOpeningTagEnd(node: LavaHtmlNode) {
   return node.firstChild &&
     needsToBorrowParentOpeningTagEndMarker(node.firstChild)
     ? ''
@@ -381,8 +381,8 @@ function printOpeningTagEnd(node: LiquidHtmlNode) {
 
 export function printOpeningTag(
   path: AstPath<HtmlNode>,
-  options: LiquidParserOptions,
-  print: LiquidPrinter,
+  options: LavaParserOptions,
+  print: LavaPrinter,
 ) {
   const node = path.getValue();
 
@@ -394,8 +394,8 @@ export function printOpeningTag(
 }
 
 export function printOpeningTagStart(
-  node: LiquidHtmlNode,
-  options: LiquidParserOptions,
+  node: LavaHtmlNode,
+  options: LavaParserOptions,
 ) {
   return node.prev && needsToBorrowNextOpeningTagStartMarker(node.prev)
     ? ''
@@ -403,8 +403,8 @@ export function printOpeningTagStart(
 }
 
 export function printOpeningTagPrefix(
-  node: LiquidHtmlNode,
-  options: LiquidParserOptions,
+  node: LavaHtmlNode,
+  options: LavaParserOptions,
 ) {
   return needsToBorrowParentOpeningTagEndMarker(node)
     ? printOpeningTagEndMarker(node.parentNode)
@@ -414,7 +414,7 @@ export function printOpeningTagPrefix(
 }
 
 // TODO
-export function printOpeningTagStartMarker(node: LiquidHtmlNode | undefined) {
+export function printOpeningTagStartMarker(node: LavaHtmlNode | undefined) {
   if (!node) return '';
   switch (node.type) {
     // case 'ieConditionalComment':
@@ -444,7 +444,7 @@ export function printOpeningTagStartMarker(node: LiquidHtmlNode | undefined) {
   }
 }
 
-export function printOpeningTagEndMarker(node: LiquidHtmlNode | undefined) {
+export function printOpeningTagEndMarker(node: LavaHtmlNode | undefined) {
   if (!node) return '';
   switch (node.type) {
     // case 'ieConditionalComment':
@@ -467,7 +467,7 @@ export function getNodeContent(
     HtmlNode,
     HtmlComment | HtmlVoidElement | HtmlSelfClosingElement
   >,
-  options: LiquidParserOptions,
+  options: LavaParserOptions,
 ) {
   let start = node.blockStartPosition.end;
   if (

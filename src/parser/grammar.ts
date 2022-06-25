@@ -1,15 +1,15 @@
 import ohm from 'ohm-js';
 
-export const liquidHtmlGrammar = ohm.grammar(
-  require('../../grammar/liquid-html.ohm.js'),
+export const lavaHtmlGrammar = ohm.grammar(
+  require('../../grammar/lava-html.ohm.js'),
 );
 
-// see ../../grammar/liquid-html.ohm for full list
-export const BLOCKS = (liquidHtmlGrammar.rules as any).blockName.body.terms.map(
+// see ../../grammar/lava-html.ohm for full list
+export const BLOCKS = (lavaHtmlGrammar.rules as any).blockName.body.terms.map(
   (x: any) => x.obj,
 ) as string[];
 
-// see ../../grammar/liquid-html.ohm for full list
+// see ../../grammar/lava-html.ohm for full list
 export const VOID_ELEMENTS = (
-  liquidHtmlGrammar.rules as any
+  lavaHtmlGrammar.rules as any
 ).voidElementName.body.terms.map((x: any) => x.args[0].obj) as string[];

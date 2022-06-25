@@ -1,22 +1,22 @@
 import { Parser, ParserOptions } from 'prettier';
 import { locEnd, locStart } from '~/utils';
-import { toLiquidHtmlAST, LiquidHtmlNode } from '~/parser/ast';
+import { toLavaHtmlAST, LavaHtmlNode } from '~/parser/ast';
 
 function parse(
   text: string,
   _parsers: Parsers,
-  _opts: ParserOptions<LiquidHtmlNode>,
-): LiquidHtmlNode {
-  return toLiquidHtmlAST(text);
+  _opts: ParserOptions<LavaHtmlNode>,
+): LavaHtmlNode {
+  return toLavaHtmlAST(text);
 }
 
-export const liquidHtmlAstFormat = 'liquid-html-ast';
+export const lavaHtmlAstFormat = 'lava-html-ast';
 
-export const liquidHtmlLanguageName = 'liquid-html';
+export const lavaHtmlLanguageName = 'lava-html';
 
-export const liquidHtmlParser: Parser<LiquidHtmlNode> = {
+export const lavaHtmlParser: Parser<LavaHtmlNode> = {
   parse,
-  astFormat: liquidHtmlAstFormat,
+  astFormat: lavaHtmlAstFormat,
   locStart,
   locEnd,
 };

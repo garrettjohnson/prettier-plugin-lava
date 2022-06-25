@@ -2,8 +2,8 @@
 0.1.4 / 2022-06-02
 ==================
 
-  * Add support for Liquid inline comments (`{% # hello world %}`) [#28](https://github.com/Shopify/prettier-plugin-liquid/pull/28)
-  * Fix support of attribute names to be spec-compliant (e.g. AlpineJS attributes) [#27](https://github.com/Shopify/prettier-plugin-liquid/pull/27)
+  * Add support for Lava inline comments (`{% # hello world %}`) [#28](https://github.com/garrettjohnson/prettier-plugin-lava/pull/28)
+  * Fix support of attribute names to be spec-compliant (e.g. AlpineJS attributes) [#27](https://github.com/garrettjohnson/prettier-plugin-lava/pull/27)
 
 0.1.3 / 2022-05-31
 ==================

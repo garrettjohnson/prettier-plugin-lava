@@ -1,5 +1,5 @@
 import { Doc, doc } from 'prettier';
-import { LiquidAstPath, LiquidHtmlNode, LiquidBranch } from '~/types';
+import { LavaAstPath, LavaHtmlNode, LavaBranch } from '~/types';
 import { isBranchedTag } from '~/parser';
 import { isEmpty } from '~/printer/utils/array';
 
@@ -10,17 +10,17 @@ export * from '~/printer/utils/node';
 const { builders } = doc;
 const { ifBreak } = builders;
 
-export function getSource(path: LiquidAstPath) {
+export function getSource(path: LavaAstPath) {
   return path.getValue().source;
 }
 
 export function isDeeplyNested(
-  node: Extract<LiquidHtmlNode, { children?: LiquidHtmlNode[] }>,
+  node: Extract<LavaHtmlNode, { children?: LavaHtmlNode[] }>,
 ): boolean {
   if (!node.children) return false;
   if (isBranchedTag(node)) {
     return !!node.children.find((child) =>
-      isDeeplyNested(child as LiquidBranch),
+      isDeeplyNested(child as LavaBranch),
     );
   }
   return !!node.children.find(

@@ -10,7 +10,7 @@ module.exports = {
     path: __dirname,
     globalObject: 'this',
     library: {
-      name: 'prettierPluginLiquid',
+      name: 'prettierPluginLava',
       type: 'umd',
     },
   },
@@ -24,9 +24,9 @@ module.exports = {
   },
   resolve: {
     alias: {
-      '../../grammar/liquid-html.ohm.js': path.resolve(
+      '../../grammar/lava-html.ohm.js': path.resolve(
         __dirname,
-        'build/shims/liquid-html-ohm.js',
+        'build/shims/lava-html-ohm.js',
       ),
     },
   },

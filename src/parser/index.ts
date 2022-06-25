@@ -1,14 +1,14 @@
 import {
   Parsers,
-  liquidHtmlParser,
-  liquidHtmlAstFormat,
-  liquidHtmlLanguageName,
+  lavaHtmlParser,
+  lavaHtmlAstFormat,
+  lavaHtmlLanguageName,
 } from '~/parser/parser';
 
 export * from '~/parser/ast';
 
-export { liquidHtmlLanguageName, liquidHtmlAstFormat };
+export { lavaHtmlLanguageName, lavaHtmlAstFormat };
 
 export const parsers: Parsers = {
-  [liquidHtmlLanguageName]: liquidHtmlParser,
+  [lavaHtmlLanguageName]: lavaHtmlParser,
 };

@@ -1,7 +1,7 @@
 import {
   AugmentedNode,
   Augment,
-  LiquidHtmlNode,
+  LavaHtmlNode,
   WithParent,
   WithSiblings,
 } from '~/types';
@@ -47,8 +47,8 @@ function parentCollection(
 
 export const augmentWithSiblings: Augment<WithParent> = (_options, node) => {
   const augmentations: WithSiblings = {
-    next: next(node) as LiquidHtmlNode | undefined,
-    prev: prev(node) as LiquidHtmlNode | undefined,
+    next: next(node) as LavaHtmlNode | undefined,
+    prev: prev(node) as LavaHtmlNode | undefined,
   };
 
   Object.assign(node, augmentations);

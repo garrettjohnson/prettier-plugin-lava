@@ -1,7 +1,7 @@
 import { Parser } from 'prettier';
 import { toAST } from 'ohm-js/extras';
-import { liquidHtmlGrammar } from '~/parser/grammar';
-import { LiquidHTMLCSTParsingError } from '~/parser/errors';
+import { lavaHtmlGrammar } from '~/parser/grammar';
+import { LavaHTMLCSTParsingError } from '~/parser/errors';
 
 export enum ConcreteNodeTypes {
   HtmlComment = 'HtmlComment',
@@ -14,11 +14,11 @@ export enum ConcreteNodeTypes {
   AttrDoubleQuoted = 'AttrDoubleQuoted',
   AttrUnquoted = 'AttrUnquoted',
   AttrEmpty = 'AttrEmpty',
-  LiquidDrop = 'LiquidDrop',
-  LiquidRawTag = 'LiquidRawTag',
-  LiquidTag = 'LiquidTag',
-  LiquidTagOpen = 'LiquidTagOpen',
-  LiquidTagClose = 'LiquidTagClose',
+  LavaDrop = 'LavaDrop',
+  LavaRawTag = 'LavaRawTag',
+  LavaTag = 'LavaTag',
+  LavaTagOpen = 'LavaTagOpen',
+  LavaTagClose = 'LavaTagClose',
   TextNode = 'TextNode',
 }
 
@@ -33,7 +33,7 @@ export interface ConcreteBasicNode<T> {
 }
 
 export interface ConcreteHtmlNodeBase<T> extends ConcreteBasicNode<T> {
-  name: string | ConcreteLiquidDrop;
+  name: string | ConcreteLavaDrop;
   attrList?: ConcreteAttributeNode[];
 }
 
@@ -64,11 +64,11 @@ export interface ConcreteHtmlTagClose
 
 export interface ConcreteAttributeNodeBase<T> extends ConcreteBasicNode<T> {
   name: string;
-  value: (ConcreteLiquidNode | ConcreteTextNode)[];
+  value: (ConcreteLavaNode | ConcreteTextNode)[];
 }
 
 export type ConcreteAttributeNode =
-  | ConcreteLiquidNode
+  | ConcreteLavaNode
   | ConcreteAttrSingleQuoted
   | ConcreteAttrDoubleQuoted
   | ConcreteAttrUnquoted
@@ -85,20 +85,20 @@ export interface ConcreteAttrEmpty
   name: string;
 }
 
-export type ConcreteLiquidNode =
-  | ConcreteLiquidRawTag
-  | ConcreteLiquidTagOpen
-  | ConcreteLiquidTagClose
-  | ConcreteLiquidTag
-  | ConcreteLiquidDrop;
+export type ConcreteLavaNode =
+  | ConcreteLavaRawTag
+  | ConcreteLavaTagOpen
+  | ConcreteLavaTagClose
+  | ConcreteLavaTag
+  | ConcreteLavaDrop;
 
-interface ConcreteBasicLiquidNode<T> extends ConcreteBasicNode<T> {
+interface ConcreteBasicLavaNode<T> extends ConcreteBasicNode<T> {
   whitespaceStart: null | '-';
   whitespaceEnd: null | '-';
 }
 
-export interface ConcreteLiquidRawTag
-  extends ConcreteBasicLiquidNode<ConcreteNodeTypes.LiquidRawTag> {
+export interface ConcreteLavaRawTag
+  extends ConcreteBasicLavaNode<ConcreteNodeTypes.LavaRawTag> {
   name: string;
   body: string;
   delimiterWhitespaceStart: null | '-';
@@ -109,25 +109,25 @@ export interface ConcreteLiquidRawTag
   blockEndLocEnd: number;
 }
 
-export interface ConcreteLiquidTagOpen
-  extends ConcreteBasicLiquidNode<ConcreteNodeTypes.LiquidTagOpen> {
+export interface ConcreteLavaTagOpen
+  extends ConcreteBasicLavaNode<ConcreteNodeTypes.LavaTagOpen> {
   name: string;
   markup: string;
 }
 
-export interface ConcreteLiquidTagClose
-  extends ConcreteBasicLiquidNode<ConcreteNodeTypes.LiquidTagClose> {
+export interface ConcreteLavaTagClose
+  extends ConcreteBasicLavaNode<ConcreteNodeTypes.LavaTagClose> {
   name: string;
 }
 
-export interface ConcreteLiquidTag
-  extends ConcreteBasicLiquidNode<ConcreteNodeTypes.LiquidTag> {
+export interface ConcreteLavaTag
+  extends ConcreteBasicLavaNode<ConcreteNodeTypes.LavaTag> {
   name: string;
   markup: string;
 }
 
-export interface ConcreteLiquidDrop
-  extends ConcreteBasicLiquidNode<ConcreteNodeTypes.LiquidDrop> {
+export interface ConcreteLavaDrop
+  extends ConcreteBasicLavaNode<ConcreteNodeTypes.LavaDrop> {
   markup: string;
 }
 
@@ -144,16 +144,16 @@ export interface ConcreteTextNode
   value: string;
 }
 
-export type LiquidHtmlConcreteNode =
+export type LavaHtmlConcreteNode =
   | ConcreteHtmlNode
-  | ConcreteLiquidNode
+  | ConcreteLavaNode
   | ConcreteTextNode;
 
-export type LiquidHtmlCST = LiquidHtmlConcreteNode[];
+export type LavaHtmlCST = LavaHtmlConcreteNode[];
 
 const markup = (i: number) => (tokens: any) => tokens[i].sourceString.trim();
 
-export function toLiquidHtmlCST(text: string): LiquidHtmlCST {
+export function toLavaHtmlCST(text: string): LavaHtmlCST {
   const locStart = (tokens: any) => tokens[0].source.startIdx;
   const locEnd = (tokens: any) => tokens[tokens.length - 1].source.endIdx;
   const textNode = {
@@ -164,10 +164,10 @@ export function toLiquidHtmlCST(text: string): LiquidHtmlCST {
     locStart,
     locEnd,
   };
-  const res = liquidHtmlGrammar.match(text);
+  const res = lavaHtmlGrammar.match(text);
 
   if (res.failed()) {
-    throw new LiquidHTMLCSTParsingError(res);
+    throw new LavaHTMLCSTParsingError(res);
   }
 
   const ohmAST = toAST(res, {
@@ -217,7 +217,7 @@ export function toLiquidHtmlCST(text: string): LiquidHtmlCST {
       locEnd,
     },
 
-    tagNameOrLiquidDrop: 0,
+    tagNameOrLavaDrop: 0,
 
     AttrUnquoted: {
       name: 0,
@@ -253,10 +253,10 @@ export function toLiquidHtmlCST(text: string): LiquidHtmlCST {
     attrDoubleQuotedTextNode: textNode,
     attrSingleQuotedTextNode: textNode,
     attrUnquotedTextNode: textNode,
-    liquidNode: 0,
-    liquidRawTag: 0,
-    liquidRawTagImpl: {
-      type: ConcreteNodeTypes.LiquidRawTag,
+    lavaNode: 0,
+    lavaRawTag: 0,
+    lavaRawTagImpl: {
+      type: ConcreteNodeTypes.LavaRawTag,
       name: 3,
       body: 7,
       whitespaceStart: 1,
@@ -271,8 +271,8 @@ export function toLiquidHtmlCST(text: string): LiquidHtmlCST {
       blockEndLocEnd: (tokens: any) => tokens[15].source.endIdx,
     },
 
-    liquidTagOpen: {
-      type: ConcreteNodeTypes.LiquidTagOpen,
+    lavaTagOpen: {
+      type: ConcreteNodeTypes.LavaTagOpen,
       name: 3,
       markup: markup(5),
       whitespaceStart: 1,
@@ -281,8 +281,8 @@ export function toLiquidHtmlCST(text: string): LiquidHtmlCST {
       locEnd,
     },
 
-    liquidTagClose: {
-      type: ConcreteNodeTypes.LiquidTagClose,
+    lavaTagClose: {
+      type: ConcreteNodeTypes.LavaTagClose,
       name: 4,
       whitespaceStart: 1,
       whitespaceEnd: 7,
@@ -290,8 +290,8 @@ export function toLiquidHtmlCST(text: string): LiquidHtmlCST {
       locEnd,
     },
 
-    liquidTag: {
-      type: ConcreteNodeTypes.LiquidTag,
+    lavaTag: {
+      type: ConcreteNodeTypes.LavaTag,
       name: 3,
       markup: markup(5),
       whitespaceStart: 1,
@@ -300,8 +300,8 @@ export function toLiquidHtmlCST(text: string): LiquidHtmlCST {
       locEnd,
     },
 
-    liquidDrop: {
-      type: ConcreteNodeTypes.LiquidDrop,
+    lavaDrop: {
+      type: ConcreteNodeTypes.LavaDrop,
       markup: markup(2),
       whitespaceStart: 1,
       whitespaceEnd: 3,
@@ -309,8 +309,8 @@ export function toLiquidHtmlCST(text: string): LiquidHtmlCST {
       locEnd,
     },
 
-    liquidInlineComment: {
-      type: ConcreteNodeTypes.LiquidTag,
+    lavaInlineComment: {
+      type: ConcreteNodeTypes.LavaTag,
       name: 3,
       markup: markup(5),
       whitespaceStart: 1,
@@ -322,5 +322,5 @@ export function toLiquidHtmlCST(text: string): LiquidHtmlCST {
     TextNode: textNode,
   });
 
-  return ohmAST as LiquidHtmlCST;
+  return ohmAST as LavaHtmlCST;
 }

@@ -1,22 +1,22 @@
 import { expect } from 'chai';
-import { toLiquidHtmlAST, LiquidHtmlNode } from '~/parser/ast';
-import { LiquidHTMLASTParsingError } from '~/parser/errors';
+import { toLavaHtmlAST, LavaHtmlNode } from '~/parser/ast';
+import { LavaHTMLASTParsingError } from '~/parser/errors';
 import { deepGet } from '~/utils';
 
-describe('Unit: toLiquidHtmlAST', () => {
+describe('Unit: toLavaHtmlAST', () => {
   let ast;
-  it('should transform a basic Liquid Drop into a LiquidDrop', () => {
-    ast = toLiquidHtmlAST('{{ name }}');
+  it('should transform a basic Lava Drop into a LavaDrop', () => {
+    ast = toLavaHtmlAST('{{ name }}');
     expectPath(ast, 'children.0').to.exist;
-    expectPath(ast, 'children.0.type').to.eql('LiquidDrop');
+    expectPath(ast, 'children.0.type').to.eql('LavaDrop');
     expectPath(ast, 'children.0.markup').to.eql('name');
     expectPosition(ast, 'children.0');
   });
 
-  it('should transform a basic Liquid Tag into a LiquidTag', () => {
-    ast = toLiquidHtmlAST('{% name %}{% if -%}{%- endif %}');
+  it('should transform a basic Lava Tag into a LavaTag', () => {
+    ast = toLavaHtmlAST('{% name %}{% if -%}{%- endif %}');
     expectPath(ast, 'children.0').to.exist;
-    expectPath(ast, 'children.0.type').to.eql('LiquidTag');
+    expectPath(ast, 'children.0.type').to.eql('LavaTag');
     expectPath(ast, 'children.0.name').to.eql('name');
     expectPath(ast, 'children.0.markup').to.eql('');
     expectPath(ast, 'children.0.children').to.be.undefined;
@@ -28,7 +28,7 @@ describe('Unit: toLiquidHtmlAST', () => {
   });
 
   it('should parse a basic text node into a TextNode', () => {
-    ast = toLiquidHtmlAST('Hello world!');
+    ast = toLavaHtmlAST('Hello world!');
     expectPath(ast, 'children.0').to.exist;
     expectPath(ast, 'children.0.type').to.eql('TextNode');
     expectPath(ast, 'children.0.value').to.eql('Hello world!');
@@ -36,7 +36,7 @@ describe('Unit: toLiquidHtmlAST', () => {
   });
 
   it('should parse HTML attributes', () => {
-    ast = toLiquidHtmlAST(`<img src="https://1234" loading='lazy' disabled checked="">`);
+    ast = toLavaHtmlAST(`<img src="https://1234" loading='lazy' disabled checked="">`);
     expectPath(ast, 'children.0').to.exist;
     expectPath(ast, 'children.0.type').to.eql('HtmlVoidElement');
     expectPath(ast, 'children.0.name').to.eql('img');
@@ -59,14 +59,14 @@ describe('Unit: toLiquidHtmlAST', () => {
   });
 
   it('should parse HTML attributes inside tags', () => {
-    ast = toLiquidHtmlAST(
+    ast = toLavaHtmlAST(
       `<img {% if cond %}src="https://1234" loading='lazy'{% else %}disabled{% endif %}>`,
     );
     expectPath(ast, 'children.0').to.exist;
     expectPath(ast, 'children.0.type').to.eql('HtmlVoidElement');
     expectPath(ast, 'children.0.name').to.eql('img');
     expectPath(ast, 'children.0.attributes.0.name').to.eql('if');
-    expectPath(ast, 'children.0.attributes.0.children.0.type').to.eql('LiquidBranch');
+    expectPath(ast, 'children.0.attributes.0.children.0.type').to.eql('LavaBranch');
     expectPath(ast, 'children.0.attributes.0.children.0.children.0.type').to.eql(
       'AttrDoubleQuoted',
     );
@@ -75,7 +75,7 @@ describe('Unit: toLiquidHtmlAST', () => {
     );
   });
 
-  it('should parse HTML tags with Liquid Drop names', () => {
+  it('should parse HTML tags with Lava Drop names', () => {
     [
       `<{{ node_type }} src="https://1234" loading='lazy' disabled></{{node_type}}>`,
       `<{{ node_type }} src="https://1234" loading='lazy' disabled></{{ node_type }}>`,
@@ -85,10 +85,10 @@ describe('Unit: toLiquidHtmlAST', () => {
       `<{{ node_type -}} src="https://1234" loading='lazy' disabled></{{- node_type -}}>`,
       `<{{- node_type -}} src="https://1234" loading='lazy' disabled></{{- node_type -}}>`,
     ].forEach((testCase) => {
-      ast = toLiquidHtmlAST(testCase);
+      ast = toLavaHtmlAST(testCase);
       expectPath(ast, 'children.0').to.exist;
       expectPath(ast, 'children.0.type').to.eql('HtmlElement');
-      expectPath(ast, 'children.0.name.type').to.eql('LiquidDrop');
+      expectPath(ast, 'children.0.name.type').to.eql('LavaDrop');
       expectPath(ast, 'children.0.name.markup').to.eql('node_type');
       expectPath(ast, 'children.0.attributes.0.name').to.eql('src');
       expectPath(ast, 'children.0.attributes.0.value.0.type').to.eql('TextNode');
@@ -111,24 +111,24 @@ describe('Unit: toLiquidHtmlAST', () => {
     ];
     for (const testCase of testCases) {
       try {
-        toLiquidHtmlAST(testCase);
-        expect(true, `expected ${testCase} to throw LiquidHTMLCSTParsingError`).to.be.false;
+        toLavaHtmlAST(testCase);
+        expect(true, `expected ${testCase} to throw LavaHTMLCSTParsingError`).to.be.false;
       } catch (e) {
-        expect(e.name).to.eql('LiquidHTMLParsingError');
+        expect(e.name).to.eql('LavaHTMLParsingError');
         expect(e.loc, `expected ${e} to have location information`).not.to.be.undefined;
       }
     }
   });
 
   it('should parse html comments as raw', () => {
-    ast = toLiquidHtmlAST(`<!--\n  hello {{ product.name }}\n-->`);
+    ast = toLavaHtmlAST(`<!--\n  hello {{ product.name }}\n-->`);
     expectPath(ast, 'children.0.type').to.eql('HtmlComment');
     expectPath(ast, 'children.0.body').to.eql('hello {{ product.name }}');
     expectPosition(ast, 'children.0');
   });
 
   it('should parse script tags as raw', () => {
-    ast = toLiquidHtmlAST(`<script>\n  const a = {{ product | json }};\n</script>`);
+    ast = toLavaHtmlAST(`<script>\n  const a = {{ product | json }};\n</script>`);
     expectPath(ast, 'children.0.type').to.eql('HtmlRawNode');
     expectPath(ast, 'children.0.name').to.eql('script');
     expectPath(ast, 'children.0.body').to.eql('\n  const a = {{ product | json }};\n');
@@ -136,93 +136,93 @@ describe('Unit: toLiquidHtmlAST', () => {
   });
 
   it('should parse style tags as raw', () => {
-    ast = toLiquidHtmlAST(`<style>\n  :root { --bg: {{ settings.bg }}}\n</style>`);
+    ast = toLavaHtmlAST(`<style>\n  :root { --bg: {{ settings.bg }}}\n</style>`);
     expectPath(ast, 'children.0.type').to.eql('HtmlRawNode');
     expectPath(ast, 'children.0.name').to.eql('style');
     expectPath(ast, 'children.0.body').to.eql('\n  :root { --bg: {{ settings.bg }}}\n');
     expectPosition(ast, 'children.0');
   });
 
-  it('should parse liquid ifs as branches', () => {
-    ast = toLiquidHtmlAST(`{% if A %}A{% elsif B %}B{% else %}C{% endif %}`);
+  it('should parse lava ifs as branches', () => {
+    ast = toLavaHtmlAST(`{% if A %}A{% elsif B %}B{% else %}C{% endif %}`);
     expectPath(ast, 'children.0').to.exist;
-    expectPath(ast, 'children.0.type').to.eql('LiquidTag');
+    expectPath(ast, 'children.0.type').to.eql('LavaTag');
     expectPath(ast, 'children.0.name').to.eql('if');
     expectPath(ast, 'children.0.children.0').to.exist;
-    expectPath(ast, 'children.0.children.0.type').to.eql('LiquidBranch');
+    expectPath(ast, 'children.0.children.0.type').to.eql('LavaBranch');
     expectPath(ast, 'children.0.children.0.name').to.eql(null);
     expectPath(ast, 'children.0.children.0.markup').to.eql('');
     expectPath(ast, 'children.0.children.0.children.0.type').to.eql('TextNode');
     expectPath(ast, 'children.0.children.0.children.0.value').to.eql('A');
 
-    expectPath(ast, 'children.0.children.1.type').to.eql('LiquidBranch');
+    expectPath(ast, 'children.0.children.1.type').to.eql('LavaBranch');
     expectPath(ast, 'children.0.children.1.name').to.eql('elsif');
     expectPath(ast, 'children.0.children.1.markup').to.eql('B');
     expectPath(ast, 'children.0.children.1.children.0.type').to.eql('TextNode');
     expectPath(ast, 'children.0.children.1.children.0.value').to.eql('B');
 
-    expectPath(ast, 'children.0.children.2.type').to.eql('LiquidBranch');
+    expectPath(ast, 'children.0.children.2.type').to.eql('LavaBranch');
     expectPath(ast, 'children.0.children.2.name').to.eql('else');
     expectPath(ast, 'children.0.children.2.children.0.type').to.eql('TextNode');
     expectPath(ast, 'children.0.children.2.children.0.value').to.eql('C');
   });
 
-  it('should parse liquid case as branches', () => {
-    ast = toLiquidHtmlAST(`{% case A %}{% when A %}A{% when B %}B{% else %}C{% endcase %}`);
+  it('should parse lava case as branches', () => {
+    ast = toLavaHtmlAST(`{% case A %}{% when A %}A{% when B %}B{% else %}C{% endcase %}`);
     expectPath(ast, 'children.0').to.exist;
-    expectPath(ast, 'children.0.type').to.eql('LiquidTag');
+    expectPath(ast, 'children.0.type').to.eql('LavaTag');
     expectPath(ast, 'children.0.name').to.eql('case');
 
     // There's an empty child node between the case and first when. That's OK (?)
     // What if there's whitespace? I think that's a printer problem. If
     // there's freeform text we should somehow catch it.
     expectPath(ast, 'children.0.children.0').to.exist;
-    expectPath(ast, 'children.0.children.0.type').to.eql('LiquidBranch');
+    expectPath(ast, 'children.0.children.0.type').to.eql('LavaBranch');
     expectPath(ast, 'children.0.children.0.name').to.eql(null);
 
     expectPath(ast, 'children.0.children.1').to.exist;
-    expectPath(ast, 'children.0.children.1.type').to.eql('LiquidBranch');
+    expectPath(ast, 'children.0.children.1.type').to.eql('LavaBranch');
     expectPath(ast, 'children.0.children.1.name').to.eql('when');
     expectPath(ast, 'children.0.children.1.markup').to.eql('A');
     expectPath(ast, 'children.0.children.1.children.0.type').to.eql('TextNode');
     expectPath(ast, 'children.0.children.1.children.0.value').to.eql('A');
 
-    expectPath(ast, 'children.0.children.2.type').to.eql('LiquidBranch');
+    expectPath(ast, 'children.0.children.2.type').to.eql('LavaBranch');
     expectPath(ast, 'children.0.children.2.name').to.eql('when');
     expectPath(ast, 'children.0.children.2.markup').to.eql('B');
     expectPath(ast, 'children.0.children.2.children.0.type').to.eql('TextNode');
     expectPath(ast, 'children.0.children.2.children.0.value').to.eql('B');
 
-    expectPath(ast, 'children.0.children.3.type').to.eql('LiquidBranch');
+    expectPath(ast, 'children.0.children.3.type').to.eql('LavaBranch');
     expectPath(ast, 'children.0.children.3.name').to.eql('else');
     expectPath(ast, 'children.0.children.3.children.0.type').to.eql('TextNode');
     expectPath(ast, 'children.0.children.3.children.0.value').to.eql('C');
   });
 
-  it('should parse liquid inline comments', () => {
-    ast = toLiquidHtmlAST(`{% #%}`);
+  it('should parse lava inline comments', () => {
+    ast = toLavaHtmlAST(`{% #%}`);
     expectPath(ast, 'children.0').to.exist;
-    expectPath(ast, 'children.0.type').to.eql('LiquidTag');
+    expectPath(ast, 'children.0.type').to.eql('LavaTag');
     expectPath(ast, 'children.0.name').to.eql('#');
     expectPath(ast, 'children.0.markup').to.eql('');
 
-    ast = toLiquidHtmlAST(`{% #hello world %}`);
+    ast = toLavaHtmlAST(`{% #hello world %}`);
     expectPath(ast, 'children.0').to.exist;
-    expectPath(ast, 'children.0.type').to.eql('LiquidTag');
+    expectPath(ast, 'children.0.type').to.eql('LavaTag');
     expectPath(ast, 'children.0.name').to.eql('#');
     expectPath(ast, 'children.0.markup').to.eql('hello world');
   });
 
-  function expectPath(ast: LiquidHtmlNode, path: string) {
+  function expectPath(ast: LavaHtmlNode, path: string) {
     return expect(deepGet(path.split('.'), ast));
   }
 
-  function expectPosition(ast: LiquidHtmlNode, path: string) {
+  function expectPosition(ast: LavaHtmlNode, path: string) {
     expectPath(ast, path + '.position.start').to.be.a('number');
     expectPath(ast, path + '.position.end').to.be.a('number');
   }
 
-  function sourceExcerpt(node: LiquidHtmlNode) {
+  function sourceExcerpt(node: LavaHtmlNode) {
     return node.source.slice(node.position.start, node.position.end);
   }
 });

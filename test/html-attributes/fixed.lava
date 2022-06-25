@@ -17,7 +17,7 @@ singleQuote: true
   disabled
 ></div>
 
-It should break LiquidTags attribute nodes and consider the insides _not_ whitespace sensitive
+It should break LavaTags attribute nodes and consider the insides _not_ whitespace sensitive
 <div
   src="https://content.instructables.com/ORIG/F23/YMO0/FPIUQOJF/F23YMO0FPIUQOJF.jpg"
   width="320"
@@ -80,17 +80,17 @@ If there's only one attribute and not self-closing, but with children, do not br
   Hello
 </div>
 
-If there's only one attribute, not self-closing, with children, do not break the LiquidTag attr and close the tag on a different line.
+If there's only one attribute, not self-closing, with children, do not break the LavaTag attr and close the tag on a different line.
 <div {% echo 'disabled' %}>
   Hello
 </div>
 
-If there's only one attribute, not self-closing, with children, do not break the LiquidNode attr and close the tag on a different line.
+If there's only one attribute, not self-closing, with children, do not break the LavaNode attr and close the tag on a different line.
 <div {{ block_attributes }}>
   Hello
 </div>
 
-If there's only one attribute, not self closing, with children, but the attribute is a liquid tag that has children, break it normally.
+If there's only one attribute, not self closing, with children, but the attribute is a lava tag that has children, break it normally.
 printWidth: 30
 <div
   {% if some_condition %}
@@ -100,7 +100,7 @@ printWidth: 30
   hello world
 </div>
 
-If there's only one attribute, not self closing, without children, but the attribute is a liquid tag that has children, break it normally.
+If there's only one attribute, not self closing, without children, but the attribute is a lava tag that has children, break it normally.
 printWidth: 30
 <div
   {% if some_condition %}
@@ -140,10 +140,10 @@ If singleQuote is false, and the attribute value contained double quotes, use si
 singleQuote: false
 <link onload='this.media="all"'>
 
-If singleQuote is true, and the attribute value has liquid tags that contain single quotes, don't care.
+If singleQuote is true, and the attribute value has lava tags that contain single quotes, don't care.
 singleQuote: true
 <script src='{{ 'styles.css' | asset_url }}'></script>
 
-If singleQuote is false, and the attribute value has liquid tags that contain double quotes, don't care.
+If singleQuote is false, and the attribute value has lava tags that contain double quotes, don't care.
 singleQuote: false
 <script src="{{ "styles.css" | asset_url }}"></script>

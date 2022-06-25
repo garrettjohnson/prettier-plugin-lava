@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as prettier from 'prettier';
 import * as plugin from '../src';
-import { LiquidParserOptions } from '../src/types';
+import { LavaParserOptions } from '../src/types';
 
 const PARAGRAPH_SPLITTER =
   /(?:\r?\n){2,}(?=\/\/|It|When|If|focus|debug|skip|<)/i;
@@ -35,10 +35,10 @@ const TEST_IDEMPOTENCE = !!(
 
 export function assertFormattedEqualsFixed(
   dirname: string,
-  options: Partial<LiquidParserOptions> = {},
+  options: Partial<LavaParserOptions> = {},
 ) {
-  const source = readFile(dirname, 'index.liquid');
-  const expectedResults = readFile(dirname, 'fixed.liquid');
+  const source = readFile(dirname, 'index.lava');
+  const expectedResults = readFile(dirname, 'fixed.lava');
 
   const chunks = source.split(PARAGRAPH_SPLITTER);
   const expectedChunks = expectedResults.split(PARAGRAPH_SPLITTER);
@@ -64,8 +64,8 @@ export function assertFormattedEqualsFixed(
         // Improve the stack trace so that it points to the fixed file instead
         // of this test-helper file. Might make navigation smoother.
         if ((e as any).stack as any) {
-          const fixedUrl = path.join(dirname, 'fixed.liquid');
-          const inputUrl = path.join(dirname, 'index.liquid');
+          const fixedUrl = path.join(dirname, 'fixed.lava');
+          const inputUrl = path.join(dirname, 'index.lava');
           const testUrl = path.join(dirname, 'index.spec.ts');
           const fixedOffset = lineOffset(expectedResults, expected);
           const fixedLoc = diffLoc(expected, actual, fixedOffset).join(':');
@@ -73,8 +73,8 @@ export function assertFormattedEqualsFixed(
           (e as any).stack = ((e as any).stack as string).replace(
             /^(\s+)at Context.test \(.*:\d+:\d+\)/im,
             [
-              `$1at fixed.liquid (${fixedUrl}:${fixedLoc})`,
-              `$1at input.liquid (${inputUrl}:${inputLine}:0)`,
+              `$1at fixed.lava (${fixedUrl}:${fixedLoc})`,
+              `$1at input.lava (${inputUrl}:${inputLine}:0)`,
               `$1at assertFormattedEqualsFixed (${testUrl}:5:6)`,
             ].join('\n'),
           );
@@ -107,7 +107,7 @@ function getTestSetup(paragraph: string, index: number) {
     .replace(/\r?\n/g, ' ')
     .trimEnd()
     .replace(/\.$/, '');
-  const prettierOptions: Partial<LiquidParserOptions> = {
+  const prettierOptions: Partial<LavaParserOptions> = {
     printWidth: 80, // We changed the default, but the tests were written with 80 in mind.
     indentSchema: true, // We changed the default, but the tests were written with true in mind.
   };
@@ -156,7 +156,7 @@ export function writeFile(dirname: string, filename: string, contents: string) {
 export function format(content: string, options: any) {
   return prettier.format(content, {
     ...options,
-    parser: 'liquid-html',
+    parser: 'lava-html',
     plugins: [plugin],
   });
 }
@@ -164,7 +164,7 @@ export function format(content: string, options: any) {
 export function printToDoc(content: string, options: any = {}) {
   return (prettier as any).__debug.printToDoc(content, {
     ...options,
-    parser: 'liquid-html',
+    parser: 'lava-html',
     plugins: [plugin],
   });
 }

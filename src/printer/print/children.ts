@@ -2,11 +2,11 @@ import { AstPath, doc } from 'prettier';
 import { locStart, locEnd } from '~/utils';
 import {
   NodeTypes,
-  LiquidHtmlNode,
-  LiquidAstPath,
-  LiquidParserOptions,
-  LiquidPrinter,
-  LiquidPrinterArgs,
+  LavaHtmlNode,
+  LavaAstPath,
+  LavaParserOptions,
+  LavaPrinter,
+  LavaPrinterArgs,
 } from '~/types';
 import {
   FORCE_BREAK_GROUP_ID,
@@ -15,7 +15,7 @@ import {
   forceNextEmptyLine,
   hasPrettierIgnore,
   isEmpty,
-  isLiquidNode,
+  isLavaNode,
   hasNoCloseMarker,
   isTextLikeNode,
   preferHardlineAsLeadingSpaces,
@@ -36,10 +36,10 @@ const {
 const { replaceTextEndOfLine } = doc.utils as any;
 
 function printChild(
-  childPath: LiquidAstPath,
-  options: LiquidParserOptions,
-  print: LiquidPrinter,
-  args: LiquidPrinterArgs,
+  childPath: LavaAstPath,
+  options: LavaParserOptions,
+  print: LavaPrinter,
+  args: LavaPrinterArgs,
 ) {
   const child = childPath.getValue();
 
@@ -66,8 +66,8 @@ function printChild(
 }
 
 function printBetweenLine(
-  prevNode: LiquidHtmlNode | undefined,
-  nextNode: LiquidHtmlNode | undefined,
+  prevNode: LavaHtmlNode | undefined,
+  nextNode: LavaHtmlNode | undefined,
 ) {
   if (!prevNode || !nextNode) return '';
 
@@ -130,8 +130,8 @@ function printBetweenLine(
 }
 
 export type HasChildren = Extract<
-  LiquidHtmlNode,
-  { children?: LiquidHtmlNode[] }
+  LavaHtmlNode,
+  { children?: LavaHtmlNode[] }
 >;
 
 type Whitespace =
@@ -169,9 +169,9 @@ interface WhitespaceBetweenNode {
 // This code is adapted from prettier's language-html plugin.
 export function printChildren(
   path: AstPath<HasChildren>,
-  options: LiquidParserOptions,
-  print: LiquidPrinter,
-  args: LiquidPrinterArgs,
+  options: LavaParserOptions,
+  print: LavaPrinter,
+  args: LavaPrinterArgs,
 ) {
   const node = path.getValue();
 
@@ -230,7 +230,7 @@ export function printChildren(
    */
   const whitespaceBetweenNode = path.map(
     (
-      childPath: AstPath<LiquidHtmlNode>,
+      childPath: AstPath<LavaHtmlNode>,
       childIndex: number,
     ): WhitespaceBetweenNode => {
       const childNode = childPath.getValue();
@@ -261,7 +261,7 @@ export function printChildren(
           leadingHardlines.push(hardline);
         } else {
           if (isTextLikeNode(childNode.prev)) {
-            if (isLiquidNode(childNode) && prevBetweenLine === softline) {
+            if (isLavaNode(childNode) && prevBetweenLine === softline) {
               leadingDependentWhitespace.push(
                 prevBetweenLine as typeof softline,
               );

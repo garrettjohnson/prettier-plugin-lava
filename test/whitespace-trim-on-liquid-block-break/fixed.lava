@@ -2,14 +2,14 @@
 
 In HTMLElement children array,
 
-it should add wtc if the liquid tag breaks on a new line and its children are whitespace sensitive and there wasn't whitespace to begin with
+it should add wtc if the lava tag breaks on a new line and its children are whitespace sensitive and there wasn't whitespace to begin with
 <div>
   {% if condition -%}
     aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   {%- endif %}
 </div>
 
-it should add wtc if the liquid tag breaks on a new line, the node is
+it should add wtc if the lava tag breaks on a new line, the node is
 leading/trailing space sensitive, and there was no leading/trailing whitespace
 <span>
   {%- if condition -%}
@@ -22,7 +22,7 @@ leading/trailing space sensitive, and there was no leading/trailing whitespace
   {%- if condition %}aaaaaa{% endif %}
 </div>
 
-it should not add wtc if the liquid drop breaks on a new line and the
+it should not add wtc if the lava drop breaks on a new line and the
 previous/next characters were spaces
 <div>
   {% if condition %}
@@ -32,7 +32,7 @@ previous/next characters were spaces
 
 --------------------------------------------------------------------------------
 
-In LiquidTag children array,
+In LavaTag children array,
 
 If it breaks and the htmlWhitespaceSensitivity is 'strict', then add whitespace stripping
 htmlWhitespaceSensitivity: 'strict'
@@ -63,7 +63,7 @@ leading/trailing space sensitive, it should not change anything
 
 --------------------------------------------------------------------------------
 
-In LiquidBranch children array,
+In LavaBranch children array,
 
 when it does break and there was a whitespace, it should not change anything
 {% if true %}
@@ -79,7 +79,7 @@ when it does break and there wasn't whitespace, it should add WTCs
 
 In paragraphs,
 
-it should add wtc if the liquid drop breaks next to a character (but not if not)
+it should add wtc if the lava drop breaks next to a character (but not if not)
 <div>
   Hey
   {% if true %}

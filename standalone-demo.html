@@ -1,9 +1,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width" />
-  <script src="file:///Users/charles/src/github.com/Shopify/prettier-plugin-liquid/node_modules/prettier/standalone.js"></script>
-  <script src="file:///Users/charles/src/github.com/Shopify/prettier-plugin-liquid/standalone.js"></script>
-  <title>Prettier Liquid Plugin</title>
+  <script src="file:///Users/charles/src/github.com/garrettjohnson/prettier-plugin-lava/node_modules/prettier/standalone.js"></script>
+  <script src="file:///Users/charles/src/github.com/garrettjohnson/prettier-plugin-lava/standalone.js"></script>
+  <title>Prettier Lava Plugin</title>
   <!--
     You may use this file to test the standalone build and make sure everything works in a browser.
     All you need to do is to open this file from your terminal with your browser.
@@ -47,8 +47,8 @@
     function format() {
       try {
         output.value = prettier.format(input.value, {
-          plugins: [prettierPluginLiquid],
-          parser: 'liquid-html',
+          plugins: [prettierPluginLava],
+          parser: 'lava-html',
         });
         stderr.value = '';
       } catch (error) {

@@ -1,14 +1,14 @@
 import {
   CSS_DISPLAY_DEFAULT,
-  CSS_DISPLAY_LIQUID_DEFAULT,
-  CSS_DISPLAY_LIQUID_TAGS,
+  CSS_DISPLAY_LAVA_DEFAULT,
+  CSS_DISPLAY_LAVA_TAGS,
   CSS_DISPLAY_TAGS,
   CSS_WHITE_SPACE_DEFAULT,
   CSS_WHITE_SPACE_TAGS,
 } from '~/constants.evaluate';
 import {
   NodeTypes,
-  LiquidParserOptions,
+  LavaParserOptions,
   Augment,
   AugmentedNode,
   WithCssProperties,
@@ -18,7 +18,7 @@ import { assertNever } from '~/utils';
 
 function getCssDisplay(
   node: AugmentedNode<WithSiblings>,
-  options: LiquidParserOptions,
+  options: LavaParserOptions,
 ): string {
   if (node.prev && node.prev.type === NodeTypes.HtmlComment) {
     // <!-- display: block -->
@@ -50,8 +50,8 @@ function getCssDisplay(
     case NodeTypes.TextNode:
       return 'inline';
 
-    case NodeTypes.LiquidTag:
-    case NodeTypes.LiquidRawTag:
+    case NodeTypes.LavaTag:
+    case NodeTypes.LavaRawTag:
       switch (options.htmlWhitespaceSensitivity) {
         case 'strict':
           return 'inline';
@@ -59,13 +59,13 @@ function getCssDisplay(
           return 'block';
         default: {
           return (
-            CSS_DISPLAY_LIQUID_TAGS[node.name] || CSS_DISPLAY_LIQUID_DEFAULT
+            CSS_DISPLAY_LAVA_TAGS[node.name] || CSS_DISPLAY_LAVA_DEFAULT
           );
         }
       }
 
-    case NodeTypes.LiquidBranch:
-    case NodeTypes.LiquidDrop:
+    case NodeTypes.LavaBranch:
+    case NodeTypes.LavaDrop:
       return 'inline';
 
     case NodeTypes.AttrDoubleQuoted:
@@ -100,14 +100,14 @@ function getNodeCssStyleWhiteSpace(node: AugmentedNode<WithSiblings>): string {
     case NodeTypes.TextNode:
       return CSS_WHITE_SPACE_DEFAULT;
 
-    case NodeTypes.LiquidRawTag:
+    case NodeTypes.LavaRawTag:
       return 'pre';
 
-    case NodeTypes.LiquidTag:
+    case NodeTypes.LavaTag:
       return CSS_WHITE_SPACE_DEFAULT;
 
-    case NodeTypes.LiquidBranch:
-    case NodeTypes.LiquidDrop:
+    case NodeTypes.LavaBranch:
+    case NodeTypes.LavaDrop:
       return CSS_WHITE_SPACE_DEFAULT;
 
     case NodeTypes.AttrDoubleQuoted:

@@ -1,18 +1,18 @@
 {
-  "name": "@shopify/prettier-plugin-liquid",
+  "name": "prettier-plugin-lava",
   "version": "0.1.4",
-  "description": "Prettier Liquid/HTML plugin by Shopify",
-  "repository": "shopify/prettier-plugin-liquid",
-  "author": "CP Clermont <@charlespwd>",
+  "description": "Prettier Lava/HTML plugin by Shopify",
+  "repository": "garrettjohnson/prettier-plugin-lava",
+  "author": "Garrett Johnson and Shopify",
   "license": "MIT",
   "main": "dist/index.js",
-  "homepage": "https://github.com/shopify/prettier-plugin-liquid#readme",
+  "homepage": "https://github.com/garrettjohnson/prettier-plugin-lava#readme",
   "publishConfig": {
     "access": "public",
     "@shopify:registry": "https://registry.npmjs.org"
   },
   "bugs": {
-    "url": "https://github.com/shopify/prettier-plugin-liquid/issues"
+    "url": "https://github.com/garrettjohnson/prettier-plugin-lava/issues"
   },
   "files": [
     "grammar/*",
@@ -34,7 +34,7 @@
     "format:check": "prettier --check --ignore-unknown \"{src,test}/**/*.ts\"",
     "prepare": "husky install",
     "prerelease": "scripts/prerelease",
-    "prettier": "prettier --plugin . --parser=liquid-html",
+    "prettier": "prettier --plugin . --parser=lava-html",
     "test": "node_modules/.bin/mocha '{src,test}/**/*.spec.ts'",
     "test:idempotence": "cross-env TEST_IDEMPOTENCE=true node_modules/.bin/mocha 'test/**/*.spec.ts'"
   },

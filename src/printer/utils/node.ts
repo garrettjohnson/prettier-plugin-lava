@@ -1,17 +1,17 @@
 import {
   HtmlSelfClosingElement,
-  LiquidHtmlNode,
-  LiquidParserOptions,
+  LavaHtmlNode,
+  LavaParserOptions,
   NodeTypes,
   TextNode,
-  LiquidNode,
-  LiquidNodeTypes,
+  LavaNode,
+  LavaNodeTypes,
   HtmlNodeTypes,
   HtmlNode,
   HtmlVoidElement,
   HtmlComment,
   HtmlElement,
-  LiquidTag,
+  LavaTag,
 } from '~/types';
 import { isEmpty } from '~/printer/utils/array';
 
@@ -26,68 +26,68 @@ export function isPreLikeNode(node: { cssWhitespace: string }) {
 // A bit like self-closing except we distinguish between them.
 // Comments are also considered self-closing.
 export function hasNoCloseMarker(
-  node: LiquidHtmlNode,
+  node: LavaHtmlNode,
 ): node is HtmlComment | HtmlVoidElement | HtmlSelfClosingElement {
   return isSelfClosing(node) || isVoidElement(node) || isHtmlComment(node);
 }
 
-export function isHtmlComment(node: LiquidHtmlNode): node is HtmlComment {
+export function isHtmlComment(node: LavaHtmlNode): node is HtmlComment {
   return node.type === NodeTypes.HtmlComment;
 }
 
 export function isSelfClosing(
-  node: LiquidHtmlNode,
+  node: LavaHtmlNode,
 ): node is HtmlSelfClosingElement {
   return node.type === NodeTypes.HtmlSelfClosingElement;
 }
 
-export function isVoidElement(node: LiquidHtmlNode): node is HtmlVoidElement {
+export function isVoidElement(node: LavaHtmlNode): node is HtmlVoidElement {
   return node.type === NodeTypes.HtmlVoidElement;
 }
 
-export function isHtmlElement(node: LiquidHtmlNode): node is HtmlElement {
+export function isHtmlElement(node: LavaHtmlNode): node is HtmlElement {
   return node.type === NodeTypes.HtmlElement;
 }
 
 export function isTextLikeNode(
-  node: LiquidHtmlNode | undefined,
+  node: LavaHtmlNode | undefined,
 ): node is TextNode {
   return !!node && node.type === NodeTypes.TextNode;
 }
 
-export function isLiquidNode(
-  node: LiquidHtmlNode | undefined,
-): node is LiquidNode {
-  return !!node && LiquidNodeTypes.includes(node.type as any);
+export function isLavaNode(
+  node: LavaHtmlNode | undefined,
+): node is LavaNode {
+  return !!node && LavaNodeTypes.includes(node.type as any);
 }
 
-export function isMultilineLiquidTag(
-  node: LiquidHtmlNode | undefined,
-): node is LiquidTag {
+export function isMultilineLavaTag(
+  node: LavaHtmlNode | undefined,
+): node is LavaTag {
   return (
     !!node &&
-    node.type === NodeTypes.LiquidTag &&
+    node.type === NodeTypes.LavaTag &&
     !!node.children &&
     !isEmpty(node.children)
   );
 }
 
-export function isHtmlNode(node: LiquidHtmlNode | undefined): node is HtmlNode {
+export function isHtmlNode(node: LavaHtmlNode | undefined): node is HtmlNode {
   return !!node && HtmlNodeTypes.includes(node.type as any);
 }
 
-export function hasNonTextChild(node: LiquidHtmlNode) {
+export function hasNonTextChild(node: LavaHtmlNode) {
   return (
     (node as any).children &&
     (node as any).children.some(
-      (child: LiquidHtmlNode) => child.type !== NodeTypes.TextNode,
+      (child: LavaHtmlNode) => child.type !== NodeTypes.TextNode,
     )
   );
 }
 
 export function shouldPreserveContent(
-  node: LiquidHtmlNode,
-  _options: LiquidParserOptions,
+  node: LavaHtmlNode,
+  _options: LavaParserOptions,
 ) {
   // // unterminated node in ie conditional comment
   // // e.g. <!--[if lt IE 9]><html><![endif]-->
@@ -118,7 +118,7 @@ export function shouldPreserveContent(
   return false;
 }
 
-export function isPrettierIgnoreNode(node: LiquidHtmlNode | undefined) {
+export function isPrettierIgnoreNode(node: LavaHtmlNode | undefined) {
   return (
     node &&
     node.type === NodeTypes.HtmlComment &&
@@ -126,11 +126,11 @@ export function isPrettierIgnoreNode(node: LiquidHtmlNode | undefined) {
   );
 }
 
-export function hasPrettierIgnore(node: LiquidHtmlNode) {
+export function hasPrettierIgnore(node: LavaHtmlNode) {
   return isPrettierIgnoreNode(node) || isPrettierIgnoreNode(node.prev);
 }
 
-export function forceNextEmptyLine(node: LiquidHtmlNode | undefined) {
+export function forceNextEmptyLine(node: LavaHtmlNode | undefined) {
   if (!node) return false;
   if (!node.next) return false;
   const source = node.source;
@@ -145,7 +145,7 @@ export function forceNextEmptyLine(node: LiquidHtmlNode | undefined) {
 }
 
 /** firstChild leadingSpaces and lastChild trailingSpaces */
-export function forceBreakContent(node: LiquidHtmlNode) {
+export function forceBreakContent(node: LavaHtmlNode) {
   return (
     forceBreakChildren(node) ||
     (node.type === NodeTypes.HtmlElement &&
@@ -163,7 +163,7 @@ export function forceBreakContent(node: LiquidHtmlNode) {
 }
 
 /** spaces between children */
-export function forceBreakChildren(node: LiquidHtmlNode) {
+export function forceBreakChildren(node: LavaHtmlNode) {
   return (
     node.type === NodeTypes.HtmlElement &&
     node.children.length > 0 &&
@@ -173,7 +173,7 @@ export function forceBreakChildren(node: LiquidHtmlNode) {
   );
 }
 
-export function preferHardlineAsSurroundingSpaces(node: LiquidHtmlNode) {
+export function preferHardlineAsSurroundingSpaces(node: LavaHtmlNode) {
   switch (node.type) {
     // case 'ieConditionalComment':
     case NodeTypes.HtmlComment:
@@ -183,7 +183,7 @@ export function preferHardlineAsSurroundingSpaces(node: LiquidHtmlNode) {
         typeof node.name === 'string' &&
         ['script', 'select'].includes(node.name)
       );
-    case NodeTypes.LiquidTag:
+    case NodeTypes.LavaTag:
       if (
         (node.prev && isTextLikeNode(node.prev)) ||
         (node.next && isTextLikeNode(node.next))
@@ -196,49 +196,49 @@ export function preferHardlineAsSurroundingSpaces(node: LiquidHtmlNode) {
   return false;
 }
 
-export function preferHardlineAsLeadingSpaces(node: LiquidHtmlNode) {
+export function preferHardlineAsLeadingSpaces(node: LavaHtmlNode) {
   return (
     preferHardlineAsSurroundingSpaces(node) ||
-    (isLiquidNode(node) && node.prev && isLiquidNode(node.prev)) ||
+    (isLavaNode(node) && node.prev && isLavaNode(node.prev)) ||
     (node.prev && preferHardlineAsTrailingSpaces(node.prev)) ||
     hasSurroundingLineBreak(node)
   );
 }
 
-export function preferHardlineAsTrailingSpaces(node: LiquidHtmlNode) {
+export function preferHardlineAsTrailingSpaces(node: LavaHtmlNode) {
   return (
     preferHardlineAsSurroundingSpaces(node) ||
-    (isLiquidNode(node) &&
+    (isLavaNode(node) &&
       node.next &&
-      (isLiquidNode(node.next) || isHtmlNode(node.next))) ||
+      (isLavaNode(node.next) || isHtmlNode(node.next))) ||
     (node.type === NodeTypes.HtmlElement && node.name === 'br') ||
     hasSurroundingLineBreak(node)
   );
 }
 
 export function hasMeaningfulLackOfLeadingWhitespace(
-  node: LiquidHtmlNode,
+  node: LavaHtmlNode,
 ): boolean {
   return node.isLeadingWhitespaceSensitive && !node.hasLeadingWhitespace;
 }
 
 export function hasMeaningfulLackOfTrailingWhitespace(
-  node: LiquidHtmlNode,
+  node: LavaHtmlNode,
 ): boolean {
   return node.isTrailingWhitespaceSensitive && !node.hasTrailingWhitespace;
 }
 
 export function hasMeaningfulLackOfDanglingWhitespace(
-  node: LiquidHtmlNode,
+  node: LavaHtmlNode,
 ): boolean {
   return node.isDanglingWhitespaceSensitive && !node.hasDanglingWhitespace;
 }
 
-function hasSurroundingLineBreak(node: LiquidHtmlNode) {
+function hasSurroundingLineBreak(node: LavaHtmlNode) {
   return hasLeadingLineBreak(node) && hasTrailingLineBreak(node);
 }
 
-function hasLeadingLineBreak(node: LiquidHtmlNode) {
+function hasLeadingLineBreak(node: LavaHtmlNode) {
   if (node.type === NodeTypes.Document) return false;
 
   return (
@@ -255,7 +255,7 @@ function hasLeadingLineBreak(node: LiquidHtmlNode) {
   );
 }
 
-function hasTrailingLineBreak(node: LiquidHtmlNode) {
+function hasTrailingLineBreak(node: LavaHtmlNode) {
   if (node.type === NodeTypes.Document) return false;
   return (
     node.hasTrailingWhitespace &&
@@ -276,6 +276,6 @@ function hasLineBreakInRange(source: string, start: number, end: number) {
   return index !== -1 && index < end;
 }
 
-export function getLastDescendant(node: LiquidHtmlNode): LiquidHtmlNode {
+export function getLastDescendant(node: LavaHtmlNode): LavaHtmlNode {
   return node.lastChild ? getLastDescendant(node.lastChild) : node;
 }

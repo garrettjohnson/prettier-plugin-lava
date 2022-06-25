@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import { deepGet } from '~/utils';
 import { NodeTypes } from '~/types';
-import { toLiquidHtmlAST } from '~/parser';
+import { toLavaHtmlAST } from '~/parser';
 import { preprocess } from '~/printer/print-preprocess';
-import { DocumentNode, LiquidHtmlNode, LiquidParserOptions } from '~/types';
+import { DocumentNode, LavaHtmlNode, LavaParserOptions } from '~/types';
 
 describe('Module: augmentWithWhitespaceHelpers', () => {
   let ast: DocumentNode;
@@ -90,24 +90,24 @@ describe('Module: augmentWithWhitespaceHelpers', () => {
           expectPath(ast, 'children.0.children.0.isLeadingWhitespaceSensitive').to.be.false;
 
           ast = toAugmentedAst(`{% if A -%} ${node} {% endif %}`);
-          expectPath(ast, 'children.0.children.0.type').to.eql(NodeTypes.LiquidBranch);
+          expectPath(ast, 'children.0.children.0.type').to.eql(NodeTypes.LavaBranch);
           expectPath(ast, 'children.0.children.0.isLeadingWhitespaceSensitive').to.be.false;
           expectPath(ast, 'children.0.children.0.children.0.isLeadingWhitespaceSensitive').to.be
             .false;
 
           ast = toAugmentedAst(`{% if A %}hello{% else -%} ${node}{% endif %}`);
-          expectPath(ast, 'children.0.children.1.type').to.eql(NodeTypes.LiquidBranch);
+          expectPath(ast, 'children.0.children.1.type').to.eql(NodeTypes.LavaBranch);
           expectPath(ast, 'children.0.children.1.isLeadingWhitespaceSensitive').to.be.true;
           expectPath(ast, 'children.0.children.1.children.0.isLeadingWhitespaceSensitive').to.be
             .false;
 
           ast = toAugmentedAst(`{% if A %} hello {%- else -%} ${node} {% endif %}`);
-          expectPath(ast, 'children.0.children.1.type').to.eql(NodeTypes.LiquidBranch);
+          expectPath(ast, 'children.0.children.1.type').to.eql(NodeTypes.LavaBranch);
           expectPath(ast, 'children.0.children.1.isLeadingWhitespaceSensitive').to.be.false;
         }
       });
 
-      it('should return true for a LiquidBranch that is not stripped', () => {
+      it('should return true for a LavaBranch that is not stripped', () => {
         ast = toAugmentedAst(`{% if A %} hello {% else %} world {% endif %}`);
         expectPath(ast, 'children.0.children.0.isLeadingWhitespaceSensitive').to.be.true;
         expectPath(ast, 'children.0.children.1.isLeadingWhitespaceSensitive').to.be.true;
@@ -235,13 +235,13 @@ describe('Module: augmentWithWhitespaceHelpers', () => {
 
       it('should return false if the parent is trimming to the inner right', () => {
         ast = toAugmentedAst('{% if true %}branch a{%- else %}branch b{% endif %}');
-        expectPath(ast, 'children.0.children.0.type').to.eql(NodeTypes.LiquidBranch);
+        expectPath(ast, 'children.0.children.0.type').to.eql(NodeTypes.LavaBranch);
         expectPath(ast, 'children.0.children.0.name').to.eql(null);
         expectPath(ast, 'children.0.children.0.children.0.isTrailingWhitespaceSensitive').to.be
           .false;
 
         ast = toAugmentedAst('{% if true %}branch a{% else %}branch b{%- endif %}');
-        expectPath(ast, 'children.0.children.1.type').to.eql(NodeTypes.LiquidBranch);
+        expectPath(ast, 'children.0.children.1.type').to.eql(NodeTypes.LavaBranch);
         expectPath(ast, 'children.0.children.1.name').to.eql('else');
         expectPath(ast, 'children.0.children.1.children.0.isTrailingWhitespaceSensitive').to.be
           .false;
@@ -262,33 +262,33 @@ describe('Module: augmentWithWhitespaceHelpers', () => {
   });
 
   describe('Unit: hasDanglingWhitespace', () => {
-    it('should handle LiquidBranch tags properly', () => {
+    it('should handle LavaBranch tags properly', () => {
       ast = toAugmentedAst('{% if true %} {% endif %}');
       // The if tag itself is dangling if it only has one branch and it's empty
       expectPath(ast, 'children.0.hasDanglingWhitespace').to.be.true;
 
       // The default branch has dangling whitespace
-      expectPath(ast, 'children.0.children.0.type').to.eql(NodeTypes.LiquidBranch);
+      expectPath(ast, 'children.0.children.0.type').to.eql(NodeTypes.LavaBranch);
       expectPath(ast, 'children.0.children.0.hasDanglingWhitespace').to.be.true;
 
       // same goes for else tags
       ast = toAugmentedAst('{% if true %} {% else %} {% endif %}');
       expectPath(ast, 'children.0.hasDanglingWhitespace').to.be.false;
-      expectPath(ast, 'children.0.children.0.type').to.eql(NodeTypes.LiquidBranch);
+      expectPath(ast, 'children.0.children.0.type').to.eql(NodeTypes.LavaBranch);
       expectPath(ast, 'children.0.children.0.hasDanglingWhitespace').to.be.true;
-      expectPath(ast, 'children.0.children.1.type').to.eql(NodeTypes.LiquidBranch);
+      expectPath(ast, 'children.0.children.1.type').to.eql(NodeTypes.LavaBranch);
       expectPath(ast, 'children.0.children.1.hasDanglingWhitespace').to.be.true;
 
       // reports false when branch is empty
       ast = toAugmentedAst('{% if true %}{% else %}{% endif %}');
       expectPath(ast, 'children.0.hasDanglingWhitespace').to.be.false;
-      expectPath(ast, 'children.0.children.0.type').to.eql(NodeTypes.LiquidBranch);
+      expectPath(ast, 'children.0.children.0.type').to.eql(NodeTypes.LavaBranch);
       expectPath(ast, 'children.0.children.0.hasDanglingWhitespace').to.be.false;
-      expectPath(ast, 'children.0.children.1.type').to.eql(NodeTypes.LiquidBranch);
+      expectPath(ast, 'children.0.children.1.type').to.eql(NodeTypes.LavaBranch);
       expectPath(ast, 'children.0.children.1.hasDanglingWhitespace').to.be.false;
     });
 
-    it('should work for LiquidTags', () => {
+    it('should work for LavaTags', () => {
       ast = toAugmentedAst('{% form %} {% endform %}');
       expectPath(ast, 'children.0.hasDanglingWhitespace').to.be.true;
 
@@ -316,12 +316,12 @@ describe('Module: augmentWithWhitespaceHelpers', () => {
       expectPath(ast, 'children.0.isDanglingWhitespaceSensitive').to.be.false;
     });
 
-    it('should return true for LiquidBranch tags', () => {
+    it('should return true for LavaBranch tags', () => {
       ast = toAugmentedAst('{% if A %} {% endif %}');
       expectPath(ast, 'children.0.children.0.isDanglingWhitespaceSensitive').to.be.true;
     });
 
-    it('should return false for LiquidBranch tags that are whitespace stripped', () => {
+    it('should return false for LavaBranch tags that are whitespace stripped', () => {
       ast = toAugmentedAst('{% if A -%} {% endif %}');
       expectPath(ast, 'children.0.children.0.isDanglingWhitespaceSensitive').to.be.false;
       ast = toAugmentedAst('{% if A %} {%- endif %}');
@@ -338,58 +338,58 @@ describe('Module: augmentWithWhitespaceHelpers', () => {
   });
 
   describe('Unit: hasLeadingWhitespace', () => {
-    it('should return true for branched LiquidTag', () => {
+    it('should return true for branched LavaTag', () => {
       ast = toAugmentedAst('{% if A %} hello {% endif %}');
-      expectPath(ast, 'children.0.type').to.be.eql(NodeTypes.LiquidTag);
+      expectPath(ast, 'children.0.type').to.be.eql(NodeTypes.LavaTag);
       expectPath(ast, 'children.0.hasLeadingWhitespace').to.be.false;
-      expectPath(ast, 'children.0.children.0.type').to.be.eql(NodeTypes.LiquidBranch);
+      expectPath(ast, 'children.0.children.0.type').to.be.eql(NodeTypes.LavaBranch);
       expectPath(ast, 'children.0.children.0.hasLeadingWhitespace').to.be.true;
     });
 
-    it('should return the correct value for LiquidBranches', () => {
+    it('should return the correct value for LavaBranches', () => {
       ast = toAugmentedAst('{% if A %} hello{% else %} ok{% endif %}');
-      expectPath(ast, 'children.0.children.0.type').to.be.eql(NodeTypes.LiquidBranch);
+      expectPath(ast, 'children.0.children.0.type').to.be.eql(NodeTypes.LavaBranch);
       expectPath(ast, 'children.0.children.0.hasLeadingWhitespace').to.be.true;
       expectPath(ast, 'children.0.children.1.hasLeadingWhitespace').to.be.false;
 
       ast = toAugmentedAst('{% if A %} {% else %}ok{% endif %}');
-      expectPath(ast, 'children.0.children.0.type').to.be.eql(NodeTypes.LiquidBranch);
+      expectPath(ast, 'children.0.children.0.type').to.be.eql(NodeTypes.LavaBranch);
       expectPath(ast, 'children.0.children.0.hasLeadingWhitespace').to.be.true;
       expectPath(ast, 'children.0.children.1.hasLeadingWhitespace').to.be.true;
     });
   });
 
   describe('Unit: hasTrailingWhitespace', () => {
-    it('should return true for branched LiquidTag', () => {
+    it('should return true for branched LavaTag', () => {
       ast = toAugmentedAst('{% if A %} hello {% endif %}');
-      expectPath(ast, 'children.0.type').to.be.eql(NodeTypes.LiquidTag);
+      expectPath(ast, 'children.0.type').to.be.eql(NodeTypes.LavaTag);
       expectPath(ast, 'children.0.hasTrailingWhitespace').to.be.false;
-      expectPath(ast, 'children.0.children.0.type').to.be.eql(NodeTypes.LiquidBranch);
+      expectPath(ast, 'children.0.children.0.type').to.be.eql(NodeTypes.LavaBranch);
       expectPath(ast, 'children.0.children.0.hasTrailingWhitespace').to.be.true;
     });
 
-    it('should return the correct value for LiquidBranches', () => {
+    it('should return the correct value for LavaBranches', () => {
       ast = toAugmentedAst('{% if A %} hello{% else %}ok {% endif %}');
-      expectPath(ast, 'children.0.children.0.type').to.be.eql(NodeTypes.LiquidBranch);
+      expectPath(ast, 'children.0.children.0.type').to.be.eql(NodeTypes.LavaBranch);
       expectPath(ast, 'children.0.children.0.hasTrailingWhitespace').to.be.false;
       expectPath(ast, 'children.0.children.1.hasTrailingWhitespace').to.be.true;
 
       ast = toAugmentedAst('{% if A %} {% else %}ok{% endif %}');
-      expectPath(ast, 'children.0.children.0.type').to.be.eql(NodeTypes.LiquidBranch);
+      expectPath(ast, 'children.0.children.0.type').to.be.eql(NodeTypes.LavaBranch);
       expectPath(ast, 'children.0.children.0.hasTrailingWhitespace').to.be.true;
       expectPath(ast, 'children.0.children.1.hasTrailingWhitespace').to.be.false;
     });
   });
 
-  function toAugmentedAst(code: string, options: Partial<LiquidParserOptions> = {}) {
-    const ast = toLiquidHtmlAST(code);
+  function toAugmentedAst(code: string, options: Partial<LavaParserOptions> = {}) {
+    const ast = toLavaHtmlAST(code);
     options.originalText = ast.source;
-    options.locStart = (node: LiquidHtmlNode) => node.position.start;
-    options.locEnd = (node: LiquidHtmlNode) => node.position.end;
-    return preprocess(ast, options as LiquidParserOptions);
+    options.locStart = (node: LavaHtmlNode) => node.position.start;
+    options.locEnd = (node: LavaHtmlNode) => node.position.end;
+    return preprocess(ast, options as LavaParserOptions);
   }
 
-  function expectPath(ast: LiquidHtmlNode, path: string, message?: string) {
+  function expectPath(ast: LavaHtmlNode, path: string, message?: string) {
     return expect(deepGet(path.split('.'), ast), message);
   }
 });

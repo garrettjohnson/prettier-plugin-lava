@@ -4,16 +4,16 @@ import {
   SupportLanguage,
   SupportOptions,
 } from 'prettier';
-import { parsers, liquidHtmlLanguageName } from '~/parser';
+import { parsers, lavaHtmlLanguageName } from '~/parser';
 import { printers } from '~/printer';
-import { LiquidHtmlNode } from '~/types';
+import { LavaHtmlNode } from '~/types';
 
 const languages: SupportLanguage[] = [
   {
-    name: 'LiquidHTML',
-    parsers: [liquidHtmlLanguageName],
-    extensions: ['.liquid'],
-    vscodeLanguageIds: ['liquid', 'Liquid'],
+    name: 'LavaHTML',
+    parsers: [lavaHtmlLanguageName],
+    extensions: ['.lava'],
+    vscodeLanguageIds: ['lava', 'Lava'],
   },
 ];
 
@@ -21,13 +21,13 @@ const options: SupportOptions = {
   singleLineLinkTags: {
     type: 'boolean',
     category: 'HTML',
-    default: false,
+    default: true,
     description: 'Always print link tags on a single line to remove clutter',
     since: '0.1.0',
   },
   indentSchema: {
     type: 'boolean',
-    category: 'LIQUID',
+    category: 'LAVA',
     default: false,
     description: 'Indent the contents of the {% schema %} tag',
     since: '0.1.0',
@@ -35,10 +35,11 @@ const options: SupportOptions = {
 };
 
 const defaultOptions: Partial<RequiredOptions> = {
-  printWidth: 120,
+  printWidth: 600,
+  tabWidth: 4,
 };
 
-const plugin: Plugin<LiquidHtmlNode> = {
+const plugin: Plugin<LavaHtmlNode> = {
   languages,
   parsers,
   printers,

@@ -8,10 +8,10 @@ export interface Position {
 
 export enum NodeTypes {
   Document = 'Document',
-  LiquidRawTag = 'LiquidRawTag',
-  LiquidTag = 'LiquidTag',
-  LiquidBranch = 'LiquidBranch',
-  LiquidDrop = 'LiquidDrop',
+  LavaRawTag = 'LavaRawTag',
+  LavaTag = 'LavaTag',
+  LavaBranch = 'LavaBranch',
+  LavaDrop = 'LavaDrop',
   HtmlSelfClosingElement = 'HtmlSelfClosingElement',
   HtmlVoidElement = 'HtmlVoidElement',
   HtmlComment = 'HtmlComment',
@@ -31,26 +31,26 @@ export const HtmlNodeTypes = [
   NodeTypes.HtmlSelfClosingElement,
 ] as const;
 
-export const LiquidNodeTypes = [
-  NodeTypes.LiquidTag,
-  NodeTypes.LiquidDrop,
-  NodeTypes.LiquidBranch,
-  NodeTypes.LiquidRawTag,
+export const LavaNodeTypes = [
+  NodeTypes.LavaTag,
+  NodeTypes.LavaDrop,
+  NodeTypes.LavaBranch,
+  NodeTypes.LavaRawTag,
 ] as const;
 
-export type LiquidAstPath = AstPath<LiquidHtmlNode>;
-export type LiquidParserOptions = ParserOptions<LiquidHtmlNode> & {
+export type LavaAstPath = AstPath<LavaHtmlNode>;
+export type LavaParserOptions = ParserOptions<LavaHtmlNode> & {
   singleAttributePerLine: boolean;
   singleLineLinkTags: boolean;
   indentSchema: boolean;
 };
-export type LiquidPrinterArgs = {
+export type LavaPrinterArgs = {
   leadingSpaceGroupId?: symbol[] | symbol;
   trailingSpaceGroupId?: symbol[] | symbol;
 };
-export type LiquidPrinter = (
-  path: AstPath<LiquidHtmlNode>,
-  args?: LiquidPrinterArgs,
+export type LavaPrinter = (
+  path: AstPath<LavaHtmlNode>,
+  args?: LavaPrinterArgs,
 ) => Doc;
 
 // This one warrants a bit of an explanation 'cuz it's definitely next
@@ -61,10 +61,10 @@ export type LiquidPrinter = (
 // ourselves. So we use a mapped type to map on the properties of T to do
 // the following:
 //
-// - If the property is an array of LiquidHtmlNode, we'll map that to an array of
+// - If the property is an array of LavaHtmlNode, we'll map that to an array of
 // Augmented<T[property]> instead.
 //
-// - If the property is a something | LiquidHtmlNode, then we'll map that type
+// - If the property is a something | LavaHtmlNode, then we'll map that type
 // to something | Augmented<T[Property]>
 //
 // So this thing will go through node.name, node.children, node.attributes,
@@ -73,11 +73,11 @@ export type LiquidPrinter = (
 // prettier-ignore
 export type Augmented<T, Aug> = {
   [Property in keyof T]: [T[Property]] extends [(infer Item)[] | undefined]
-    ? [Item] extends [AST.LiquidHtmlNode]
+    ? [Item] extends [AST.LavaHtmlNode]
       ? Augmented<Item, Aug>[]
       : Item[]
     : T[Property] extends infer P // this here is to distribute the condition
-      ? P extends AST.LiquidHtmlNode // so string and LiquidDrop go through this check independently
+      ? P extends AST.LavaHtmlNode // so string and LavaDrop go through this check independently
         ? Augmented<P, Aug>
         : P
       : never;
@@ -97,13 +97,13 @@ export type WithSiblings = {
   // We're cheating here by saying the prev/next will have all the props.
   // That's kind of a lie. But it would be too complicated to do this any
   // other way.
-  prev: LiquidHtmlNode | undefined;
-  next: LiquidHtmlNode | undefined;
+  prev: LavaHtmlNode | undefined;
+  next: LavaHtmlNode | undefined;
 };
 
 export type WithFamily = {
-  firstChild: LiquidHtmlNode | undefined;
-  lastChild: LiquidHtmlNode | undefined;
+  firstChild: LavaHtmlNode | undefined;
+  lastChild: LavaHtmlNode | undefined;
 };
 
 export type WithCssProperties = {
@@ -122,22 +122,22 @@ export type WithWhitespaceHelpers = {
   hasDanglingWhitespace: boolean;
 };
 
-export type AugmentedNode<Aug> = Augmented<AST.LiquidHtmlNode, Aug>;
+export type AugmentedNode<Aug> = Augmented<AST.LavaHtmlNode, Aug>;
 
 export type Augment<Aug> = <NodeType extends AugmentedNode<Aug>>(
-  options: LiquidParserOptions,
+  options: LavaParserOptions,
   node: NodeType,
   parentNode?: NodeType,
 ) => void;
 
-export type LiquidHtmlNode = Augmented<AST.LiquidHtmlNode, AllAugmentations>;
+export type LavaHtmlNode = Augmented<AST.LavaHtmlNode, AllAugmentations>;
 export type DocumentNode = Augmented<AST.DocumentNode, AllAugmentations>;
-export type LiquidNode = Augmented<AST.LiquidNode, AllAugmentations>;
+export type LavaNode = Augmented<AST.LavaNode, AllAugmentations>;
 export type ParentNode = Augmented<AST.ParentNode, AllAugmentations>;
-export type LiquidRawTag = Augmented<AST.LiquidRawTag, AllAugmentations>;
-export type LiquidTag = Augmented<AST.LiquidTag, AllAugmentations>;
-export type LiquidBranch = Augmented<AST.LiquidBranch, AllAugmentations>;
-export type LiquidDrop = Augmented<AST.LiquidDrop, AllAugmentations>;
+export type LavaRawTag = Augmented<AST.LavaRawTag, AllAugmentations>;
+export type LavaTag = Augmented<AST.LavaTag, AllAugmentations>;
+export type LavaBranch = Augmented<AST.LavaBranch, AllAugmentations>;
+export type LavaDrop = Augmented<AST.LavaDrop, AllAugmentations>;
 export type HtmlNode = Augmented<AST.HtmlNode, AllAugmentations>;
 export type HtmlTag = Exclude<HtmlNode, HtmlComment>;
 export type HtmlElement = Augmented<AST.HtmlElement, AllAugmentations>;

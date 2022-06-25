@@ -303,7 +303,7 @@ function hasDanglingWhitespace(node: AugmentedAstNode): boolean {
   } else if (!node.children) {
     return false;
   } else if (
-    node.type === NodeTypes.LiquidTag &&
+    node.type === NodeTypes.LavaTag &&
     isBranchedTag(node) &&
     node.children.length === 1
   ) {
@@ -316,7 +316,7 @@ function hasDanglingWhitespace(node: AugmentedAstNode): boolean {
 
 function hasLeadingWhitespace(node: AugmentedAstNode): boolean {
   // Edge case for default branch.
-  if (node.type === NodeTypes.LiquidBranch && !node.prev) {
+  if (node.type === NodeTypes.LavaBranch && !node.prev) {
     return node.firstChild
       ? hasLeadingWhitespace(node.firstChild)
       : hasDanglingWhitespace(node);
@@ -325,7 +325,7 @@ function hasLeadingWhitespace(node: AugmentedAstNode): boolean {
 }
 
 function hasTrailingWhitespace(node: AugmentedAstNode): boolean {
-  if (node.type === NodeTypes.LiquidBranch) {
+  if (node.type === NodeTypes.LavaBranch) {
     return node.lastChild
       ? hasTrailingWhitespace(node.lastChild)
       : hasDanglingWhitespace(node);
@@ -355,12 +355,12 @@ export function isTrimmingOuterRight(
 ): boolean {
   if (!node) return false;
   switch (node.type) {
-    case NodeTypes.LiquidRawTag:
-    case NodeTypes.LiquidTag: // {% if a %}{% endif -%}, {% assign x -%}
+    case NodeTypes.LavaRawTag:
+    case NodeTypes.LavaTag: // {% if a %}{% endif -%}, {% assign x -%}
       return (node.delimiterWhitespaceEnd ?? node.whitespaceEnd) === '-';
-    case NodeTypes.LiquidBranch:
+    case NodeTypes.LavaBranch:
       return false;
-    case NodeTypes.LiquidDrop: // {{ foo -}}
+    case NodeTypes.LavaDrop: // {{ foo -}}
       return node.whitespaceEnd === '-';
     default:
       return false;
@@ -372,10 +372,10 @@ export function isTrimmingOuterLeft(
 ): boolean {
   if (!node) return false;
   switch (node.type) {
-    case NodeTypes.LiquidRawTag:
-    case NodeTypes.LiquidTag: // {%- if a %}{% endif %}, {%- assign x = 1 %}
-    case NodeTypes.LiquidBranch: // {%- else %}
-    case NodeTypes.LiquidDrop: // {{- 'val' }}
+    case NodeTypes.LavaRawTag:
+    case NodeTypes.LavaTag: // {%- if a %}{% endif %}, {%- assign x = 1 %}
+    case NodeTypes.LavaBranch: // {%- else %}
+    case NodeTypes.LavaDrop: // {{- 'val' }}
       return node.whitespaceStart === '-';
     default:
       return false;
@@ -387,13 +387,13 @@ export function isTrimmingInnerLeft(
 ): boolean {
   if (!node) return false;
   switch (node.type) {
-    case NodeTypes.LiquidRawTag:
-    case NodeTypes.LiquidTag: // {% form a -%}{% endform %}
+    case NodeTypes.LavaRawTag:
+    case NodeTypes.LavaTag: // {% form a -%}{% endform %}
       if (node.delimiterWhitespaceEnd === undefined) return false;
       return node.whitespaceEnd === '-';
-    case NodeTypes.LiquidBranch: // {% if a -%}{% else -%}{% endif %}
+    case NodeTypes.LavaBranch: // {% if a -%}{% else -%}{% endif %}
       // This branch should never happen.
-      if (!node.parentNode || node.parentNode.type !== NodeTypes.LiquidTag) {
+      if (!node.parentNode || node.parentNode.type !== NodeTypes.LavaTag) {
         return false;
       }
 
@@ -404,7 +404,7 @@ export function isTrimmingInnerLeft(
 
       // Otherwise gets it from the delimiter. e.g. {% else -%}
       return node.whitespaceEnd === '-';
-    case NodeTypes.LiquidDrop:
+    case NodeTypes.LavaDrop:
     default:
       return false;
   }
@@ -415,13 +415,13 @@ export function isTrimmingInnerRight(
 ): boolean {
   if (!node) return false;
   switch (node.type) {
-    case NodeTypes.LiquidRawTag:
-    case NodeTypes.LiquidTag: // {% if a %}{%- endif %}
+    case NodeTypes.LavaRawTag:
+    case NodeTypes.LavaTag: // {% if a %}{%- endif %}
       if (node.delimiterWhitespaceStart === undefined) return false;
       return node.delimiterWhitespaceStart === '-';
-    case NodeTypes.LiquidBranch:
+    case NodeTypes.LavaBranch:
       // This branch should never happen.
-      if (!node.parentNode || node.parentNode.type !== NodeTypes.LiquidTag) {
+      if (!node.parentNode || node.parentNode.type !== NodeTypes.LavaTag) {
         return false;
       }
 
@@ -432,7 +432,7 @@ export function isTrimmingInnerRight(
 
       // Otherwise gets it from the next branch
       return isTrimmingOuterLeft(node.next);
-    case NodeTypes.LiquidDrop:
+    case NodeTypes.LavaDrop:
     default:
       return false;
   }

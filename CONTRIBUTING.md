@@ -1,4 +1,4 @@
-# Contributing to @shopify/prettier-plugin-liquid
+# Contributing to @garrettjohnson/prettier-plugin-lava
 
 Requirements:
 
@@ -6,7 +6,7 @@ Requirements:
 - Yarn
 
 ```
-git clone git@github.com/shopify/prettier-plugin-liquid
+git clone git@github.com/garrettjohnson/prettier-plugin-lava
 yarn
 yarn test
 ```
@@ -64,7 +64,7 @@ To run from source on another repo or file:
 yarn build
 
 # run prettier on a file or folder
-prettier --plugin . --write path/to/files.liquid
+prettier --plugin . --write path/to/files.lava
 ```
 
 ## Running from source on another code base
@@ -72,12 +72,12 @@ prettier --plugin . --write path/to/files.liquid
 ### Adding new integration tests
 
 - Copy any of the folder in the `test/` directory and rename it to something appropriate.
-- In the `index.liquid` file, type code that should be made prettier
-- In the `fixed.liquid` file, type what you'd expect the plugin to output
+- In the `index.lava` file, type code that should be made prettier
+- In the `fixed.lava` file, type what you'd expect the plugin to output
 
 ## How to contribute
 
-1. Fork it ( https://github.com/Shopify/prettier-plugin-liquid/fork )
+1. Fork it ( https://github.com/garrettjohnson/prettier-plugin-lava/fork )
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)

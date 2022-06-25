@@ -11,15 +11,15 @@ assignees: ''
 A clear and concise description of what the bug is.
 
 **Unformatted source**
-```liquid
+```lava
 ```
 
 **Expected output**
-```liquid
+```lava
 ```
 
 **Actual output**
-```liquid
+```lava
 ```
 
 **Debugging information**

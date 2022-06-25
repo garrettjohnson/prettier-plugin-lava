@@ -1,4 +1,4 @@
-## Releasing `@shopify/prettier-plugin-liquid`
+## Releasing `@garrettjohnson/prettier-plugin-lava`
 
 1. Check the Semantic Versioning page for info on how to version the new release: http://semver.org
 
@@ -30,9 +30,9 @@
    git push origin v$VERSION
    ```
 
-8. On [Shipit](https://shipit.shopify.io/shopify/prettier-plugin-liquid), deploy your commit.
+8. On [Shipit](https://shipit.shopify.io/garrettjohnson/prettier-plugin-lava), deploy your commit.
 
-9. [Create a GitHub release](https://github.com/Shopify/prettier-plugin-liquid/releases/new) for the change.
+9. [Create a GitHub release](https://github.com/garrettjohnson/prettier-plugin-lava/releases/new) for the change.
 
    ```
    git fetch origin

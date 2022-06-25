@@ -18,8 +18,8 @@ import {
 import { printChildren } from '~/printer/print/children';
 import {
   NodeTypes,
-  LiquidParserOptions,
-  LiquidPrinter,
+  LavaParserOptions,
+  LavaPrinter,
   HtmlNode,
   HtmlComment,
 } from '~/types';
@@ -31,8 +31,8 @@ const { replaceTextEndOfLine } = doc.utils as any;
 
 export function printElement(
   path: AstPath<Exclude<HtmlNode, HtmlComment>>,
-  options: LiquidParserOptions,
-  print: LiquidPrinter,
+  options: LavaParserOptions,
+  print: LavaPrinter,
 ) {
   const node = path.getValue();
 

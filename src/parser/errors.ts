@@ -6,12 +6,12 @@ interface LineColPosition {
   column: number;
 }
 
-export class LiquidHTMLCSTParsingError extends SyntaxError {
+export class LavaHTMLCSTParsingError extends SyntaxError {
   loc?: { start: LineColPosition; end: LineColPosition };
 
   constructor(ohm: MatchResult) {
     super(ohm.shortMessage);
-    this.name = 'LiquidHTMLParsingError';
+    this.name = 'LavaHTMLParsingError';
 
     const input = (ohm as any).input;
     const errorPos = (ohm as any)._rightmostFailurePosition;
@@ -37,7 +37,7 @@ export class LiquidHTMLCSTParsingError extends SyntaxError {
   }
 }
 
-export class LiquidHTMLASTParsingError extends SyntaxError {
+export class LavaHTMLASTParsingError extends SyntaxError {
   loc?: { start: LineColPosition; end: LineColPosition };
 
   constructor(
@@ -47,7 +47,7 @@ export class LiquidHTMLASTParsingError extends SyntaxError {
     endIndex: number,
   ) {
     super(message);
-    this.name = 'LiquidHTMLParsingError';
+    this.name = 'LavaHTMLParsingError';
 
     const lc = lineColumn(source);
     const start = lc.fromIndex(startIndex);

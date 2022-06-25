@@ -44,7 +44,7 @@ export const CSS_DISPLAY_TAGS: Record<string, string> = {
   optgroup: 'block',
 };
 
-export const CSS_DISPLAY_LIQUID_TAGS: Record<string, string> = {
+export const CSS_DISPLAY_LAVA_TAGS: Record<string, string> = {
   // control flow tags
   if: 'inline',
   unless: 'inline',
@@ -65,7 +65,7 @@ export const CSS_DISPLAY_LIQUID_TAGS: Record<string, string> = {
   echo: 'inline',
   form: 'block',
   layout: 'none',
-  liquid: 'inline',
+  lava: 'inline',
   paginate: 'inline',
   raw: 'inline',
   render: 'inline',
@@ -80,7 +80,7 @@ export const CSS_DISPLAY_LIQUID_TAGS: Record<string, string> = {
   decrement: 'inline',
 };
 
-export const CSS_DISPLAY_LIQUID_DEFAULT = 'inline';
+export const CSS_DISPLAY_LAVA_DEFAULT = 'inline';
 
 export const CSS_DISPLAY_DEFAULT = 'inline';
 export const CSS_WHITE_SPACE_TAGS: Record<string, string> =

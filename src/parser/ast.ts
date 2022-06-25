@@ -3,14 +3,14 @@ import {
   ConcreteHtmlTagClose,
   ConcreteHtmlTagOpen,
   ConcreteHtmlVoidElement,
-  ConcreteLiquidDrop,
-  ConcreteLiquidNode,
-  ConcreteLiquidTagClose,
+  ConcreteLavaDrop,
+  ConcreteLavaNode,
+  ConcreteLavaTagClose,
   ConcreteNodeTypes,
   ConcreteTextNode,
-  LiquidHtmlCST,
-  LiquidHtmlConcreteNode,
-  toLiquidHtmlCST,
+  LavaHtmlCST,
+  LavaHtmlConcreteNode,
+  toLavaHtmlCST,
   ConcreteHtmlSelfClosingElement,
   ConcreteAttrSingleQuoted,
   ConcreteAttrDoubleQuoted,
@@ -18,41 +18,41 @@ import {
 } from '~/parser/cst';
 import { NodeTypes, Position } from '~/types';
 import { assertNever, deepGet, dropLast } from '~/utils';
-import { LiquidHTMLASTParsingError } from '~/parser/errors';
+import { LavaHTMLASTParsingError } from '~/parser/errors';
 
-export type LiquidHtmlNode =
+export type LavaHtmlNode =
   | DocumentNode
-  | LiquidNode
+  | LavaNode
   | HtmlNode
   | AttributeNode
   | TextNode;
 
 export interface DocumentNode extends ASTNode<NodeTypes.Document> {
-  children: LiquidHtmlNode[];
+  children: LavaHtmlNode[];
   name: '#document';
 }
 
-export type LiquidNode = LiquidRawTag | LiquidTag | LiquidDrop | LiquidBranch;
+export type LavaNode = LavaRawTag | LavaTag | LavaDrop | LavaBranch;
 
 export interface HasChildren {
-  children?: LiquidHtmlNode[];
+  children?: LavaHtmlNode[];
 }
 export interface HasAttributes {
   attributes: AttributeNode[];
 }
 export interface HasValue {
-  value: (TextNode | LiquidNode)[];
+  value: (TextNode | LavaNode)[];
 }
 export interface HasName {
-  name: string | LiquidDrop;
+  name: string | LavaDrop;
 }
 
 export type ParentNode = Extract<
-  LiquidHtmlNode,
+  LavaHtmlNode,
   HasChildren | HasAttributes | HasValue | HasName
 >;
 
-export interface LiquidRawTag extends ASTNode<NodeTypes.LiquidRawTag> {
+export interface LavaRawTag extends ASTNode<NodeTypes.LavaRawTag> {
   /**
    * e.g. raw, style, javascript
    */
@@ -70,7 +70,7 @@ export interface LiquidRawTag extends ASTNode<NodeTypes.LiquidRawTag> {
   blockEndPosition: Position;
 }
 
-export interface LiquidTag extends ASTNode<NodeTypes.LiquidTag> {
+export interface LavaTag extends ASTNode<NodeTypes.LavaTag> {
   /**
    * e.g. if, ifchanged, for, etc.
    */
@@ -80,7 +80,7 @@ export interface LiquidTag extends ASTNode<NodeTypes.LiquidTag> {
    * The body of the tag. May contain arguments. Excludes the name of the tag. Left trimmed.
    */
   markup: string;
-  children?: LiquidHtmlNode[];
+  children?: LavaHtmlNode[];
   whitespaceStart: '-' | '';
   whitespaceEnd: '-' | '';
   delimiterWhitespaceStart?: '-' | '';
@@ -89,7 +89,7 @@ export interface LiquidTag extends ASTNode<NodeTypes.LiquidTag> {
   blockEndPosition?: Position;
 }
 
-export interface LiquidBranch extends ASTNode<NodeTypes.LiquidBranch> {
+export interface LavaBranch extends ASTNode<NodeTypes.LavaBranch> {
   /**
    * e.g. else, elsif, when | null when in the main branch
    */
@@ -99,13 +99,13 @@ export interface LiquidBranch extends ASTNode<NodeTypes.LiquidBranch> {
    * The body of the branch tag. May contain arguments. Excludes the name of the tag. Left trimmed.
    */
   markup: string;
-  children: LiquidHtmlNode[];
+  children: LavaHtmlNode[];
   whitespaceStart: '-' | '';
   whitespaceEnd: '-' | '';
   blockStartPosition: Position;
 }
 
-export interface LiquidDrop extends ASTNode<NodeTypes.LiquidDrop> {
+export interface LavaDrop extends ASTNode<NodeTypes.LavaDrop> {
   /**
    * The body of the drop. May contain filters. Not trimmed.
    */
@@ -123,7 +123,7 @@ export type HtmlNode =
 
 export interface HtmlElement extends HtmlNodeBase<NodeTypes.HtmlElement> {
   blockEndPosition: Position;
-  children: LiquidHtmlNode[];
+  children: LavaHtmlNode[];
 }
 export interface HtmlVoidElement
   extends HtmlNodeBase<NodeTypes.HtmlVoidElement> {
@@ -147,13 +147,13 @@ export interface HtmlNodeBase<T> extends ASTNode<T> {
   /**
    * e.g. div, span, h1, h2, h3...
    */
-  name: string | LiquidDrop;
+  name: string | LavaDrop;
   attributes: AttributeNode[];
   blockStartPosition: Position;
 }
 
 export type AttributeNode =
-  | LiquidNode
+  | LavaNode
   | AttrSingleQuoted
   | AttrDoubleQuoted
   | AttrUnquoted
@@ -169,7 +169,7 @@ export interface AttrEmpty extends ASTNode<NodeTypes.AttrEmpty> {
   name: string;
 }
 
-export type ValueNode = TextNode | LiquidNode;
+export type ValueNode = TextNode | LavaNode;
 
 export interface AttributeNodeBase<T> extends ASTNode<T> {
   name: string;
@@ -187,23 +187,23 @@ export interface ASTNode<T> {
   source: string;
 }
 
-export function isBranchedTag(node: LiquidHtmlNode) {
+export function isBranchedTag(node: LavaHtmlNode) {
   return (
-    node.type === NodeTypes.LiquidTag &&
+    node.type === NodeTypes.LavaTag &&
     ['if', 'for', 'unless', 'case'].includes(node.name)
   );
 }
 
-// Not exported because you can use node.type === NodeTypes.LiquidBranch.
-function isBranchTag(node: LiquidHtmlNode) {
+// Not exported because you can use node.type === NodeTypes.LavaBranch.
+function isBranchTag(node: LavaHtmlNode) {
   return (
-    node.type === NodeTypes.LiquidTag &&
+    node.type === NodeTypes.LavaTag &&
     ['else', 'elsif', 'when'].includes(node.name)
   );
 }
 
-export function toLiquidHtmlAST(text: string): DocumentNode {
-  const cst = toLiquidHtmlCST(text);
+export function toLavaHtmlAST(text: string): DocumentNode {
+  const cst = toLavaHtmlCST(text);
   const root: DocumentNode = {
     type: NodeTypes.Document,
     source: text,
@@ -218,7 +218,7 @@ export function toLiquidHtmlAST(text: string): DocumentNode {
 }
 
 class ASTBuilder {
-  ast: LiquidHtmlNode[];
+  ast: LavaHtmlNode[];
   cursor: (string | number)[];
   source: string;
 
@@ -229,7 +229,7 @@ class ASTBuilder {
   }
 
   get current() {
-    return deepGet<LiquidHtmlNode[]>(this.cursor, this.ast) as LiquidHtmlNode[];
+    return deepGet<LavaHtmlNode[]>(this.cursor, this.ast) as LavaHtmlNode[];
   }
 
   get currentPosition(): number {
@@ -238,17 +238,17 @@ class ASTBuilder {
 
   get parent(): ParentNode | undefined {
     if (this.cursor.length == 0) return undefined;
-    return deepGet<LiquidTag | HtmlElement>(dropLast(1, this.cursor), this.ast);
+    return deepGet<LavaTag | HtmlElement>(dropLast(1, this.cursor), this.ast);
   }
 
-  open(node: LiquidHtmlNode) {
+  open(node: LavaHtmlNode) {
     this.current.push(node);
     this.cursor.push(this.currentPosition);
     this.cursor.push('children');
 
     if (isBranchedTag(node)) {
       this.open({
-        type: NodeTypes.LiquidBranch,
+        type: NodeTypes.LavaBranch,
         name: null,
         markup: '',
         position: {
@@ -267,13 +267,13 @@ class ASTBuilder {
     }
   }
 
-  push(node: LiquidHtmlNode) {
-    if (node.type === NodeTypes.LiquidTag && isBranchTag(node)) {
+  push(node: LavaHtmlNode) {
+    if (node.type === NodeTypes.LavaTag && isBranchTag(node)) {
       this.cursor.pop();
       this.cursor.pop();
       this.open({
         name: node.name,
-        type: NodeTypes.LiquidBranch,
+        type: NodeTypes.LavaBranch,
         markup: node.markup,
         position: { ...node.position },
         children: [],
@@ -283,7 +283,7 @@ class ASTBuilder {
         source: this.source,
       });
     } else {
-      if (this.parent?.type === NodeTypes.LiquidBranch) {
+      if (this.parent?.type === NodeTypes.LavaBranch) {
         this.parent.position.end = node.position.end;
       }
       this.current.push(node);
@@ -291,10 +291,10 @@ class ASTBuilder {
   }
 
   close(
-    node: ConcreteLiquidTagClose | ConcreteHtmlTagClose,
-    nodeType: NodeTypes.LiquidTag | NodeTypes.HtmlElement,
+    node: ConcreteLavaTagClose | ConcreteHtmlTagClose,
+    nodeType: NodeTypes.LavaTag | NodeTypes.HtmlElement,
   ) {
-    if (this.parent?.type === NodeTypes.LiquidBranch) {
+    if (this.parent?.type === NodeTypes.LavaBranch) {
       this.parent.position.end = node.locStart;
       this.cursor.pop();
       this.cursor.pop();
@@ -304,7 +304,7 @@ class ASTBuilder {
       getName(this.parent) !== getName(node) ||
       this.parent?.type !== nodeType
     ) {
-      throw new LiquidHTMLASTParsingError(
+      throw new LavaHTMLASTParsingError(
         `Attempting to close ${nodeType} '${node.name}' before ${this.parent?.type} '${this.parent?.name}' was closed`,
         this.source,
         this.parent?.position?.start || 0,
@@ -315,8 +315,8 @@ class ASTBuilder {
     this.parent.position.end = node.locEnd;
     this.parent.blockEndPosition = position(node);
     if (
-      this.parent.type == NodeTypes.LiquidTag &&
-      node.type == ConcreteNodeTypes.LiquidTagClose
+      this.parent.type == NodeTypes.LavaTag &&
+      node.type == ConcreteNodeTypes.LavaTagClose
     ) {
       this.parent.delimiterWhitespaceStart = node.whitespaceStart ?? '';
       this.parent.delimiterWhitespaceEnd = node.whitespaceEnd ?? '';
@@ -327,8 +327,8 @@ class ASTBuilder {
 }
 
 function getName(
-  node: ConcreteLiquidTagClose | ConcreteHtmlTagClose | ParentNode | undefined,
-): string | LiquidDrop | null {
+  node: ConcreteLavaTagClose | ConcreteHtmlTagClose | ParentNode | undefined,
+): string | LavaDrop | null {
   if (!node) return null;
   switch (node.type) {
     case NodeTypes.HtmlElement:
@@ -341,9 +341,9 @@ function getName(
 }
 
 export function cstToAst(
-  cst: LiquidHtmlCST | ConcreteAttributeNode[],
+  cst: LavaHtmlCST | ConcreteAttributeNode[],
   source: string,
-): LiquidHtmlNode[] {
+): LavaHtmlNode[] {
   const builder = new ASTBuilder(source);
 
   for (const node of cst) {
@@ -358,14 +358,14 @@ export function cstToAst(
         break;
       }
 
-      case ConcreteNodeTypes.LiquidDrop: {
-        builder.push(toLiquidDrop(node, source));
+      case ConcreteNodeTypes.LavaDrop: {
+        builder.push(toLavaDrop(node, source));
         break;
       }
 
-      case ConcreteNodeTypes.LiquidTagOpen: {
+      case ConcreteNodeTypes.LavaTagOpen: {
         builder.open({
-          type: NodeTypes.LiquidTag,
+          type: NodeTypes.LavaTag,
           markup: node.markup,
           position: position(node),
           children: [],
@@ -378,14 +378,14 @@ export function cstToAst(
         break;
       }
 
-      case ConcreteNodeTypes.LiquidTagClose: {
-        builder.close(node, NodeTypes.LiquidTag);
+      case ConcreteNodeTypes.LavaTagClose: {
+        builder.close(node, NodeTypes.LavaTag);
         break;
       }
 
-      case ConcreteNodeTypes.LiquidTag: {
+      case ConcreteNodeTypes.LavaTag: {
         builder.push({
-          type: NodeTypes.LiquidTag,
+          type: NodeTypes.LavaTag,
           markup: node.markup,
           position: position(node),
           name: node.name,
@@ -397,9 +397,9 @@ export function cstToAst(
         break;
       }
 
-      case ConcreteNodeTypes.LiquidRawTag: {
+      case ConcreteNodeTypes.LavaRawTag: {
         builder.push({
-          type: NodeTypes.LiquidRawTag,
+          type: NodeTypes.LavaRawTag,
           name: node.name,
           body: node.body,
           whitespaceStart: node.whitespaceStart ?? '',
@@ -518,7 +518,7 @@ function toAttributePosition(
     | ConcreteAttrSingleQuoted
     | ConcreteAttrDoubleQuoted
     | ConcreteAttrUnquoted,
-  value: (LiquidNode | TextNode)[],
+  value: (LavaNode | TextNode)[],
 ): Position {
   if (value.length === 0) {
     // This is bugged when there's whitespace on either side. But I don't
@@ -544,10 +544,10 @@ function toAttributePosition(
 }
 
 function toAttributeValue(
-  value: (ConcreteLiquidNode | ConcreteTextNode)[],
+  value: (ConcreteLavaNode | ConcreteTextNode)[],
   source: string,
-): (LiquidNode | TextNode)[] {
-  return cstToAst(value, source) as (LiquidNode | TextNode)[];
+): (LavaNode | TextNode)[] {
+  return cstToAst(value, source) as (LavaNode | TextNode)[];
 }
 
 function toAttributes(
@@ -557,14 +557,14 @@ function toAttributes(
   return cstToAst(attrList, source) as AttributeNode[];
 }
 
-function toName(name: string | ConcreteLiquidDrop, source: string) {
+function toName(name: string | ConcreteLavaDrop, source: string) {
   if (typeof name === 'string') return name;
-  return toLiquidDrop(name, source);
+  return toLavaDrop(name, source);
 }
 
-function toLiquidDrop(node: ConcreteLiquidDrop, source: string): LiquidDrop {
+function toLavaDrop(node: ConcreteLavaDrop, source: string): LavaDrop {
   return {
-    type: NodeTypes.LiquidDrop,
+    type: NodeTypes.LavaDrop,
     markup: node.markup,
     whitespaceStart: node.whitespaceStart ?? '',
     whitespaceEnd: node.whitespaceEnd ?? '',
@@ -615,7 +615,7 @@ function toHtmlSelfClosingElement(
 }
 
 function position(
-  node: LiquidHtmlConcreteNode | ConcreteAttributeNode,
+  node: LavaHtmlConcreteNode | ConcreteAttributeNode,
 ): Position {
   return {
     start: node.locStart,
@@ -624,13 +624,13 @@ function position(
 }
 
 export function walk(
-  ast: LiquidHtmlNode,
-  fn: (ast: LiquidHtmlNode, parentNode: LiquidHtmlNode | undefined) => void,
-  parentNode?: LiquidHtmlNode,
+  ast: LavaHtmlNode,
+  fn: (ast: LavaHtmlNode, parentNode: LavaHtmlNode | undefined) => void,
+  parentNode?: LavaHtmlNode,
 ) {
   for (const key of ['children', 'attributes']) {
     if (key in ast) {
-      (ast as any)[key].forEach((node: LiquidHtmlNode) => walk(node, fn, ast));
+      (ast as any)[key].forEach((node: LavaHtmlNode) => walk(node, fn, ast));
     }
   }
 

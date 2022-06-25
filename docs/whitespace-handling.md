@@ -28,13 +28,13 @@ Whitespace (or the lack of thereof) between nodes is **meaningful** when either 
 - the previous node is trailing whitespace sensitive
 - the next node is leading whitespace sensitive.
 
-A **node** is one of the many AST (Abstract Syntax Tree) nodes that we got from parsing the Liquid template.
+A **node** is one of the many AST (Abstract Syntax Tree) nodes that we got from parsing the Lava template.
 
 ## The tools
 
 There are two categories of tools to deal with whitespace or the lack of whitespace.
 - HTML tools
-- Liquid tools
+- Lava tools
 
 ### Maintaining lack of whitespace in HTML
 
@@ -53,9 +53,9 @@ For **HTML**, the only solution is to "borrow" the sibling (or parent) node's ta
 
 What we see here is that the `TextNode` with value of `world` _borrowed_ the `em` tag's closing tag end's marker.
 
-### Maintaining lack of whitespace in Liquid
+### Maintaining lack of whitespace in Lava
 
-For **Liquid**, we can optionally add whitespace stripping characters to the node:
+For **Lava**, we can optionally add whitespace stripping characters to the node:
 
 ```html
 <!-- before -->
@@ -68,7 +68,7 @@ For **Liquid**, we can optionally add whitespace stripping characters to the nod
 </p>
 ```
 
-What we see here is that `{% echo 'world' %}` Liquid tag added the whitespace stripping character `-` to the left to maintain the lack of whitespace.
+What we see here is that `{% echo 'world' %}` Lava tag added the whitespace stripping character `-` to the left to maintain the lack of whitespace.
 
 ## The solution
 
@@ -80,9 +80,9 @@ To maintain the lack of whitespace in HTML, we have a rule:
 
 > When the lack of whitespace around an HTML node is meaningful, maintain it with tag marker borrowing.
 
-To maintain the lack of whitespace in Liquid, we have this rule:
+To maintain the lack of whitespace in Lava, we have this rule:
 
-> When the lack of whitespace around a Liquid node is meaningful, maintain it with whitespace stripping.
+> When the lack of whitespace around a Lava node is meaningful, maintain it with whitespace stripping.
 
 When the two rules above are in conflict, we have another rule:
 
@@ -96,6 +96,6 @@ If you're wondering how we determine if a node **is whitespace sensitive**, see 
 
 If you're wondering how we do **tag marker borrowing**, see [print/tag.ts](../src/printer/print/tag.ts).
 
-If you're wondering how we do **conditional whitespace stripping**, see [print/liquid.ts](../src/printer/print/liquid.ts).
+If you're wondering how we do **conditional whitespace stripping**, see [print/lava.ts](../src/printer/print/lava.ts).
 
 If you're wondering **what kind of whitespace we use between nodes**, see [print/children.ts](../src/printer/print/children.ts).
