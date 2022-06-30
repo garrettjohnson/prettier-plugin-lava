@@ -15,7 +15,7 @@
   -->
 </p>
 
-This is a very early (NOT PRODUCTION READY) and experimental fork of the Shopify Prettier Plugin for Liquid, with enhancements for Rock RMS Lava, including entity commands, and Rock RMS specific changes to the underlying liquid syntax. 
+This is a very early (NOT PRODUCTION READY) and experimental fork of the [Shopify Prettier Plugin for Liquid](https://github.com/Shopify/prettier-plugin-liquid), with enhancements for [Rock RMS Lava](https://www.rockrms.com/lava), including entity commands, and Rock RMS specific changes to enable Lava functionalityy. 
 
 ===
 
