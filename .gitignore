@@ -4,9 +4,9 @@ yarn-error.log
 .DS_Store
 dawn
 TODO
-build/shims/liquid-html-ohm.js
+build/shims/lava-html-ohm.js
 standalone.js
 standalone.js.LICENSE.txt
-**/actual.liquid
+**/actual.lava
 coverage
 .nyc_output
