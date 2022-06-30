@@ -33,10 +33,10 @@ _Not yet_. We have a [list of issues](https://github.com/garrettjohnson/prettier
 
 ```bash
 # with npm
-npm install --save-dev prettier @garrettjohnson/prettier-plugin-lava
+npm install --save-dev prettier prettier-plugin-lava
 
 # with yarn
-yarn add --dev prettier @garrettjohnson/prettier-plugin-lava
+yarn add --dev prettier prettier-plugin-lava
 ```
 
 ## Usage
