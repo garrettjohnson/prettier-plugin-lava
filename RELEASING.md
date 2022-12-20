@@ -34,9 +34,7 @@
    git push origin v$VERSION
    ```
 
-8. On [Shipit](https://shipit.shopify.io/garrettjohnson/prettier-plugin-lava), deploy your commit.
-
-9. [Create a GitHub release](https://github.com/Garrettjohnson/prettier-plugin-lava/releases/new) for the change.
+8. [Create a GitHub release](https://github.com/Garrettjohnson/prettier-plugin-lava/releases/new) for the change.
 
    ```
    git fetch origin

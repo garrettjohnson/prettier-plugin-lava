@@ -1,3 +1,4 @@
+Copyright 2022-present, Garrett Johnson
 
 Copyright 2022-present, Shopify Inc.
 
