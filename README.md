@@ -7,11 +7,11 @@
 </h1>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@garrettjohnson/prettier-plugin-lava"><img src="https://img.shields.io/npm/v/@garrettjohnson/prettier-plugin-lava.svg?sanitize=true" alt="Version"></a>
+  <a href="https://www.npmjs.com/package/prettier-plugin-lava"><img src="https://img.shields.io/npm/v/prettier-plugin-lava.svg?sanitize=true" alt="Version"></a>
   <a href="https://github.com/Garrettjohnson/prettier-plugin-lava/blob/main/LICENSE.md"><img src="https://img.shields.io/npm/l/@garrettjohnson/prettier-plugin-lava.svg?sanitize=true" alt="License"></a>
   <a href="https://github.com/Garrettjohnson/prettier-plugin-lava-prototype/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Garrettjohnson/prettier-plugin-lava-prototype/actions/workflows/ci.yml/badge.svg"></a>
   <!--
-    <a href="https://npmcharts.com/compare/@garrettjohnson/prettier-plugin-lava?minimal=true"><img src="https://img.shields.io/npm/dm/@garrettjohnson/prettier-plugin-lava.svg?sanitize=true" alt="Downloads"></a>
+    <a href="https://npmcharts.com/compare/prettier-plugin-lava?minimal=true"><img src="https://img.shields.io/npm/dm/prettier-plugin-lava.svg?sanitize=true" alt="Downloads"></a>
   -->
 </p>
 
