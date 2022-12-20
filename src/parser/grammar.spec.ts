@@ -8,10 +8,20 @@ describe('Unit: lavaHtmlGrammar', () => {
     expectMatchSucceeded('<a src="https://google.com"></b>').to.be.true;
     expectMatchSucceeded(`<img src="hello" loading='lazy' enabled=true disabled>`).to.be.true;
     expectMatchSucceeded(`<img src="hello" loading='lazy' enabled=true disabled />`).to.be.true;
+    expectMatchSucceeded(`<{{header_type}}-header>`).to.be.true;
+    expectMatchSucceeded(`<header--{{header_type}}>`).to.be.true;
+    expectMatchSucceeded(`<-nope>`).to.be.false;
+    expectMatchSucceeded(`<:nope>`).to.be.false;
+    expectMatchSucceeded(`<1nope>`).to.be.false;
     expectMatchSucceeded(`{{ product.feature }}`).to.be.true;
     expectMatchSucceeded(`{{product.feature}}`).to.be.true;
     expectMatchSucceeded(`{%- if A -%}`).to.be.true;
     expectMatchSucceeded(`{%-if A-%}`).to.be.true;
+    expectMatchSucceeded(`{%- else-%}`).to.be.true;
+    expectMatchSucceeded(`{%- lava-%}`).to.be.true;
+    expectMatchSucceeded(`{%- schema-%}`).to.be.true;
+    expectMatchSucceeded(`{%- form-%}`).to.be.true;
+    expectMatchSucceeded(`{{ true-}}`).to.be.true;
     expectMatchSucceeded(`
       <html>
         <head>
@@ -28,6 +38,17 @@ describe('Unit: lavaHtmlGrammar', () => {
         </body>
       </html>
     `).to.be.true;
+    expectMatchSucceeded(`
+      <input
+        class="[[ cssClasses.checkbox ]] form-checkbox sm:text-[8px]"
+        type="checkbox"
+
+        [[# isRefined ]]
+          checked
+        [[/ isRefined ]]
+      />
+    `).to.be.true;
+    expectMatchSucceeded(`<div data-popup-{{ section.id }}="size-{{ section.id }}">`).to.be.true;
     expectMatchSucceeded('<img {% if aboveFold %} loading="lazy"{% endif %} />').to.be.true;
     expectMatchSucceeded('<svg><use></svg>').to.be.true;
   });
@@ -38,6 +59,6 @@ describe('Unit: lavaHtmlGrammar', () => {
   });
 
   function expectMatchSucceeded(text: string) {
-    return expect(lavaHtmlGrammar.match(text).succeeded());
+    return expect(lavaHtmlGrammar.match(text, 'Node').succeeded());
   }
 });

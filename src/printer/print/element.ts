@@ -21,50 +21,98 @@ import {
   LavaParserOptions,
   LavaPrinter,
   HtmlNode,
-  HtmlComment,
+  LavaPrinterArgs,
+  HtmlRawNode,
 } from '~/types';
+import { RawMarkupKinds } from '~/parser';
 
 const {
-  builders: { breakParent, dedentToRoot, group, indent, line, softline },
+  builders: {
+    breakParent,
+    dedentToRoot,
+    group,
+    indent,
+    hardline,
+    line,
+    softline,
+  },
 } = doc;
 const { replaceTextEndOfLine } = doc.utils as any;
 
-export function printElement(
-  path: AstPath<Exclude<HtmlNode, HtmlComment>>,
+export function printRawElement(
+  path: AstPath<HtmlRawNode>,
   options: LavaParserOptions,
   print: LavaPrinter,
+  _args: LavaPrinterArgs,
 ) {
   const node = path.getValue();
+  const attrGroupId = Symbol('element-attr-group-id');
+  let body: Doc = [];
+  const hasEmptyBody = node.body.value.trim() === '';
+  const shouldIndentBody = node.body.kind !== RawMarkupKinds.markdown;
+
+  if (!hasEmptyBody) {
+    if (shouldIndentBody) {
+      body = [indent([hardline, path.call(print, 'body')]), hardline];
+    } else {
+      body = [dedentToRoot([hardline, path.call(print, 'body')]), hardline];
+    }
+  }
+
+  return group([
+    printOpeningTagPrefix(node, options),
+    group(printOpeningTag(path, options, print, attrGroupId), {
+      id: attrGroupId,
+    }),
+    ...body,
+    ...printClosingTag(node, options),
+    printClosingTagSuffix(node, options),
+  ]);
+}
+
+export function printElement(
+  path: AstPath<HtmlNode>,
+  options: LavaParserOptions,
+  print: LavaPrinter,
+  args: LavaPrinterArgs,
+) {
+  const node = path.getValue();
+  const attrGroupId = Symbol('element-attr-group-id');
+  const elementGroupId = Symbol('element-group-id');
+
+  if (node.type === NodeTypes.HtmlRawNode) {
+    return printRawElement(path as AstPath<HtmlRawNode>, options, print, args);
+  }
 
   if (hasNoCloseMarker(node)) {
     // TODO, broken for HtmlComment but this code path is not used (so far).
     return [
-      group(printOpeningTag(path, options, print)),
+      group(printOpeningTag(path, options, print, attrGroupId), {
+        id: attrGroupId,
+      }),
       ...printClosingTag(node, options),
       printClosingTagSuffix(node, options),
     ];
   }
 
-  if (
-    shouldPreserveContent(node, options) ||
-    node.type === NodeTypes.HtmlRawNode
-  ) {
+  if (shouldPreserveContent(node)) {
     return [
       printOpeningTagPrefix(node, options),
-      group(printOpeningTag(path, options, print)),
+      group(printOpeningTag(path, options, print, attrGroupId), {
+        id: attrGroupId,
+      }),
       ...replaceTextEndOfLine(getNodeContent(node, options)),
       ...printClosingTag(node, options),
       printClosingTagSuffix(node, options),
     ];
   }
 
-  const attrGroupId = Symbol('element-attr-group-id');
-  const elementGroupId = Symbol('element-group-id');
-
   const printTag = (doc: Doc) =>
     group(
       [
-        group(printOpeningTag(path, options, print), { id: attrGroupId }),
+        group(printOpeningTag(path, options, print, attrGroupId), {
+          id: attrGroupId,
+        }),
         doc,
         printClosingTag(node, options),
       ],

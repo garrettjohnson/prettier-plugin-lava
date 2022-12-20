@@ -10,14 +10,12 @@ export const trimEnd = (x: string) => x.trimEnd();
 
 export function bodyLines(str: string): string[] {
   return str
-    .replace(/^\n*|\s*$/g, '') // only want the meat
+    .replace(/^(?: |\t)*(\r?\n)*|\s*$/g, '') // only want the meat
     .split(/\r?\n/);
 }
 
-export function markupLines<
-  T extends Extract<LavaHtmlNode, { markup: string }>,
->(node: T): string[] {
-  return node.markup.trim().split('\n');
+export function markupLines(markup: string): string[] {
+  return markup.trim().split('\n');
 }
 
 export function reindent(lines: string[], skipFirst = false): string[] {
@@ -31,7 +29,7 @@ export function reindent(lines: string[], skipFirst = false): string[] {
     return lines;
   }
 
-  const indentStrip = new RegExp('^' + ' '.repeat(minIndentLevel));
+  const indentStrip = new RegExp('^' + '\\s'.repeat(minIndentLevel));
   return lines.map((line) => line.replace(indentStrip, '')).map(trimEnd);
 }
 

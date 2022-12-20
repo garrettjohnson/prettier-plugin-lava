@@ -44,20 +44,43 @@ function printChild(
   const child = childPath.getValue();
 
   if (hasPrettierIgnore(child)) {
+    const isPrevBorrowingOpeningMarker =
+      child.prev && needsToBorrowNextOpeningTagStartMarker(child.prev);
+    const bodyStartOffset = isPrevBorrowingOpeningMarker
+      ? printOpeningTagStartMarker(child).length
+      : 0;
+    const bodyStart = locStart(child) + bodyStartOffset;
+
+    const isNextBorrowingClosingMarker =
+      child.next && needsToBorrowPrevClosingTagEndMarker(child.next);
+
+    // This could be "minus the `>` because the next tag borrows it"
+    const bodyEndOffset = isNextBorrowingClosingMarker
+      ? printClosingTagEndMarker(child, options).length
+      : 0;
+    const bodyEnd = locEnd(child) - bodyEndOffset;
+
+    let rawContent = options.originalText.slice(bodyStart, bodyEnd);
+
+    // This is an idempotence edge case that I don't know how to solve
+    // "cleanly." I feel like there's a more elegant solution, but I can't
+    // find one right now.
+    //
+    // The gist: We might pretty-print something like this:
+    //   <!-- prettier-ignore -->
+    //   <b>{%cycle a,b,c%}</b
+    //   >hi
+    // Which would mean the closing tag is '</b\n  >'
+    //
+    // For idempotence to be maintained, we need to strip the '\n  '
+    // from the raw source.
+    if (child.type === NodeTypes.HtmlElement && isNextBorrowingClosingMarker) {
+      rawContent = rawContent.trimEnd();
+    }
+
     return [
       printOpeningTagPrefix(child, options),
-      ...replaceTextEndOfLine(
-        options.originalText.slice(
-          locStart(child) +
-            (child.prev && needsToBorrowNextOpeningTagStartMarker(child.prev)
-              ? printOpeningTagStartMarker(child).length
-              : 0),
-          locEnd(child) -
-            (child.next && needsToBorrowPrevClosingTagEndMarker(child.next)
-              ? printClosingTagEndMarker(child, options).length
-              : 0),
-        ),
-      ),
+      ...replaceTextEndOfLine(rawContent),
       printClosingTagSuffix(child, options),
     ];
   }
@@ -129,10 +152,7 @@ function printBetweenLine(
   return nextNode.hasLeadingWhitespace ? line : softline;
 }
 
-export type HasChildren = Extract<
-  LavaHtmlNode,
-  { children?: LavaHtmlNode[] }
->;
+export type HasChildren = Extract<LavaHtmlNode, { children?: LavaHtmlNode[] }>;
 
 type Whitespace =
   | doc.builders.Line
@@ -196,6 +216,7 @@ export function printChildren(
                 forceNextEmptyLine(childNode.prev) ? hardline : '',
               ],
           printChild(childPath, options, print, {
+            ...args,
             leadingSpaceGroupId: FORCE_BREAK_GROUP_ID,
             trailingSpaceGroupId: FORCE_BREAK_GROUP_ID,
           }),
@@ -328,6 +349,7 @@ export function printChildren(
             [
               ...leadingDependentWhitespace, // breaks with trailing
               printChild(childPath, options, print, {
+                ...args,
                 leadingSpaceGroupId: leadingSpaceGroupId(
                   whitespaceBetweenNode,
                   childIndex,

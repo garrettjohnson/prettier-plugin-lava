@@ -93,3 +93,17 @@ singleQuote: true
 If singleQuote is false, and the attribute value has lava tags that contain double quotes, don't care.
 singleQuote: false
 <script src="{{ "styles.css" | asset_url }}"></script>
+
+It should pretty print attribute names with Lava in them
+singleQuote: true
+<div data-popup-{{section.id}}="size-{{ section.id }}"></div>
+
+It should pretty print attribute names with Lava in them without new lines
+printWidth: 1
+<div data-popup-{{section.id|upcase}}="size-{{ section.id }}"></div>
+
+It should pretty unquoted lava drop attributes
+<div id={{ section.id }}--omg></div>
+
+It should pretty print smart quotes into dumb quotes to prevent copy pasting errors
+<h1 class=“section-header__title h2” id=‘abc’></h1>

@@ -1,0 +1,30 @@
+---
+hello: world
+array:
+  - one
+  - "{{ lava }}"
+  - three
+---
+<body>
+  hello
+</body>
+
+It should handle empty yaml blocks
+---
+---
+<body>
+  hello
+</body>
+
+It should format text after the block correctly
+printWidth: 1
+---
+hello: world
+array:
+  - one
+  - "{{ lava }}"
+  - three
+---
+this
+is
+text

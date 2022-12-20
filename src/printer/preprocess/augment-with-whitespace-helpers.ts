@@ -1,8 +1,9 @@
 // A lot in here is adapted from prettier/prettier.
 
-import { HtmlNodeTypes, NodeTypes, WithFamily } from '~/types';
+import { HtmlNodeTypes, LavaNodeTypes, NodeTypes, WithFamily } from '~/types';
 import {
   CSS_WHITE_SPACE_DEFAULT,
+  CSS_WHITE_SPACE_LAVA_TAGS,
   CSS_WHITE_SPACE_TAGS,
 } from '~/constants.evaluate';
 import {
@@ -14,7 +15,12 @@ import {
   WithWhitespaceHelpers,
 } from '~/types';
 import { isBranchedTag } from '~/parser';
-import { isPreLikeNode, isScriptLikeTag, isWhitespace } from '~/printer/utils';
+import {
+  isAttributeNode,
+  isPreLikeNode,
+  isScriptLikeTag,
+  isWhitespace,
+} from '~/printer/utils';
 
 type RequiredAugmentations = WithParent &
   WithSiblings &
@@ -26,6 +32,9 @@ export const augmentWithWhitespaceHelpers: Augment<RequiredAugmentations> = (
   _options,
   node,
 ) => {
+  if (node.cssDisplay === 'should not be relevant') {
+    return;
+  }
   const augmentations: WithWhitespaceHelpers = {
     isDanglingWhitespaceSensitive: isDanglingWhitespaceSensitiveNode(node),
     isIndentationSensitive: isIndentationSensitiveNode(node),
@@ -100,10 +109,20 @@ function isIndentationSensitiveNode(node: AugmentedAstNode) {
  * A node is leading whitespace sensitive when whitespace to the outer left
  * of it has meaning. Removing or adding whitespace there would alter the
  * rendered output.
+ * <div attr-{{ hi }}
  */
 function isLeadingWhitespaceSensitiveNode(node: AugmentedAstNode): boolean {
   if (!node) {
     return false;
+  }
+
+  // <a data-{{ this }}="hi">
+  if (
+    node.parentNode &&
+    isAttributeNode(node.parentNode) &&
+    node.type === NodeTypes.LavaDrop
+  ) {
+    return true;
   }
 
   // {{- this }}
@@ -206,6 +225,15 @@ function isTrailingWhitespaceSensitiveNode(node: AugmentedAstNode): boolean {
     return false;
   }
 
+  // <a data-{{ this }}="hi">
+  if (
+    node.parentNode &&
+    isAttributeNode(node.parentNode) &&
+    node.type === NodeTypes.LavaDrop
+  ) {
+    return true;
+  }
+
   // 'text {{- drop }}'
   if (node.next && isTrimmingOuterLeft(node.next)) {
     return false;
@@ -253,6 +281,7 @@ function isTrailingWhitespaceSensitiveNode(node: AugmentedAstNode): boolean {
       || isScriptLikeTag(node.parentNode) // technically we don't use this one.
       || !isInnerRightWhitespaceSensitiveCssDisplay(node.parentNode.cssDisplay)
       || isTrimmingInnerRight(node.parentNode)
+      || isAttributeNode(node as any)
     )
   ) {
     return false;
@@ -344,6 +373,17 @@ type HtmlNode = Extract<
 
 export function isHtmlNode(node: AugmentedAstNode): node is HtmlNode {
   return HtmlNodeTypes.includes(node.type as any);
+}
+
+type LavaNode = Extract<
+  AugmentedAstNode,
+  { type: typeof LavaNodeTypes[number] }
+>;
+
+export function isLavaNode(
+  node: AugmentedAstNode | undefined,
+): node is LavaNode {
+  return !!node && LavaNodeTypes.includes(node.type as any);
 }
 
 export function isParentNode(node: AugmentedAstNode): node is ParentNode {
@@ -471,6 +511,10 @@ function getNodeCssStyleWhiteSpace(node: AugmentedAstNode) {
     (isHtmlNode(node) &&
       typeof node.name === 'string' &&
       CSS_WHITE_SPACE_TAGS[node.name]) ||
+    (isLavaNode(node) &&
+      'name' in node &&
+      typeof node.name === 'string' &&
+      CSS_WHITE_SPACE_LAVA_TAGS[node.name]) ||
     CSS_WHITE_SPACE_DEFAULT
   );
 }

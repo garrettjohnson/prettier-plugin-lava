@@ -18,6 +18,22 @@ const languages: SupportLanguage[] = [
 ];
 
 const options: SupportOptions = {
+  lavaSingleQuote: {
+    type: 'boolean',
+    category: 'LAVA',
+    default: true,
+    description:
+      'Use single quotes instead of double quotes in Lava tags and objects.',
+    since: '0.2.0',
+  },
+  embeddedSingleQuote: {
+    type: 'boolean',
+    category: 'LAVA',
+    default: true,
+    description:
+      'Use single quotes instead of double quotes in embedded languages (JavaScript, CSS, TypeScript inside <script>, <style> or Lava equivalent).',
+    since: '0.4.0',
+  },
   singleLineLinkTags: {
     type: 'boolean',
     category: 'HTML',

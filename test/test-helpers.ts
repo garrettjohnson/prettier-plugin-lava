@@ -3,12 +3,15 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as prettier from 'prettier';
 import * as plugin from '../src';
+import { parse } from '../src/parser/parser';
+import { preprocess } from '../src/printer/print-preprocess';
 import { LavaParserOptions } from '../src/types';
 
 const PARAGRAPH_SPLITTER =
   /(?:\r?\n){2,}(?=\/\/|It|When|If|focus|debug|skip|<)/i;
 
-const TEST_MESSAGE = /^(\/\/|It|When|If|focus|debug|skip)[^<{]*/i;
+const TEST_MESSAGE =
+  /^(\/\/|It|When|If|focus|debug|skip)((\s|\S)(?!<)(?!{)(?!---))*./i;
 
 function testMessage(input: string, actual: string) {
   return [
@@ -39,23 +42,24 @@ export function assertFormattedEqualsFixed(
 ) {
   const source = readFile(dirname, 'index.lava');
   const expectedResults = readFile(dirname, 'fixed.lava');
+  const trimEnd = (s: string) => s.trimEnd();
 
-  const chunks = source.split(PARAGRAPH_SPLITTER);
-  const expectedChunks = expectedResults.split(PARAGRAPH_SPLITTER);
+  const chunks = source.split(PARAGRAPH_SPLITTER).map(trimEnd);
+  const expectedChunks = expectedResults.split(PARAGRAPH_SPLITTER).map(trimEnd);
 
   for (let i = 0; i < chunks.length; i++) {
     const src = chunks[i];
     const testConfig = getTestSetup(src, i);
     const test = () => {
       const testOptions = merge(options, testConfig.prettierOptions);
-      const input = src.replace(TEST_MESSAGE, '');
+      const input = src.replace(TEST_MESSAGE, '').trimStart();
       if (testConfig.debug) debug(input, testOptions);
       let actual = format(input, testOptions).trimEnd();
-      let expected = expectedChunks[i].replace(TEST_MESSAGE, '').trimEnd();
+      let expected = expectedChunks[i].replace(TEST_MESSAGE, '').trimStart();
 
       if (TEST_IDEMPOTENCE) {
-        expected = actual;
-        actual = format(expected, testOptions).trimEnd();
+        if (testConfig.debug) debug(actual, testOptions);
+        actual = format(actual, testOptions).trimEnd();
       }
 
       try {
@@ -170,6 +174,8 @@ export function printToDoc(content: string, options: any = {}) {
 }
 
 export function debug(content: string, options: any = {}) {
+  const ast = parse(content, plugin.parsers!, options);
+  const processedAST = preprocess(ast, options);
   const printed = format(content, options);
   const doc = printToDoc(content, options);
   debugger;
@@ -187,10 +193,7 @@ export function debug(content: string, options: any = {}) {
  *
  * And it will be as though function() was at indent 0 and foo was indent 1.
  */
-export function reindent(
-  strs: TemplateStringsArray,
-  ...keys: any[] | undefined
-): string {
+export function reindent(strs: TemplateStringsArray, ...keys: any[]): string {
   const s = strs.reduce((acc, next, i) => {
     if (keys[i] !== undefined) {
       return acc + next + keys[i];

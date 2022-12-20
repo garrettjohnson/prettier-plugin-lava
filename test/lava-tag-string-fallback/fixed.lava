@@ -1,0 +1,9 @@
+It pastes LavaTag.markup that it can't parse as is with spaces trimmed on both ends
+{% echo || wat %}
+
+It pastes LavaTagOpen.markup that it can't parse as is with spaces trimmed on both ends
+{% tablerow element bin collection %}{% endtablerow %}
+{% tablerow element bin collection %}{% endtablerow %}
+
+It pastes LavaRawTag.markup that it can't parse as is with spaces trimmed on both ends
+{% stylesheet wat|| %} {% endstylesheet %}

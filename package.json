@@ -1,26 +1,34 @@
 {
   "name": "prettier-plugin-lava",
-  "version": "0.1.5",
-  "description": "Prettier Lava/HTML plugin by Shopify",
+  "version": "0.9.0",
+  "description": "Prettier Lava/HTML plugin",
   "repository": "garrettjohnson/prettier-plugin-lava",
-  "author": "Garrett Johnson and Shopify",
+  "author": "Garrett Johnson",
   "license": "MIT",
   "main": "dist/index.js",
   "homepage": "https://github.com/garrettjohnson/prettier-plugin-lava#readme",
+  "types": "dist/index.d.ts",
+  "publishConfig": {
+    "access": "public",
+    "@shopify:registry": "https://registry.npmjs.org"
+  },
   "bugs": {
     "url": "https://github.com/garrettjohnson/prettier-plugin-lava/issues"
   },
   "files": [
     "grammar/*",
     "dist/**/*.js",
+    "dist/**/*.ts",
     "standalone.js",
+    "standalone.d.ts",
     "standalone.js.LICENSE.txt",
     "ThirdPartyNotices.txt"
   ],
   "scripts": {
-    "build": "yarn build:ts && yarn build:shims && yarn build:standalone",
+    "build": "yarn build:ts && yarn build:shims && yarn build:standalone && yarn copyto:playground",
     "build:shims": "node build/shims.js",
     "build:standalone": "webpack -c webpack.config.js",
+    "copyto:playground": "@powershell copy './standalone.js' './playground/assets/standalone.js'",
     "build:ts": "tsc -p . && tsc-alias -p tsconfig.json",
     "coverage": "nyc yarn test",
     "coverage:json": "nyc --reporter=json yarn test",
@@ -28,11 +36,13 @@
     "debug": "node --inspect-brk node_modules/.bin/_mocha \"{src,test}/**/*.ts\"",
     "format": "scripts/relative-to-alias && prettier --write --ignore-unknown \"{src,test}/**/*.ts\"",
     "format:check": "prettier --check --ignore-unknown \"{src,test}/**/*.ts\"",
+    "playground": "npx http-server playground",
     "prepare": "husky install",
     "prerelease": "scripts/prerelease",
     "prettier": "prettier --plugin . --parser=lava-html",
     "test": "node_modules/.bin/mocha '{src,test}/**/*.spec.ts'",
-    "test:idempotence": "cross-env TEST_IDEMPOTENCE=true node_modules/.bin/mocha 'test/**/*.spec.ts'"
+    "test:idempotence": "cross-env TEST_IDEMPOTENCE=true node_modules/.bin/mocha 'test/**/*.spec.ts'",
+    "type-check": "tsc --noEmit"
   },
   "peerDependencies": {
     "prettier": "^2.0.0"

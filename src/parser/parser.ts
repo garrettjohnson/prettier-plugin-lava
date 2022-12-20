@@ -1,8 +1,8 @@
 import { Parser, ParserOptions } from 'prettier';
 import { locEnd, locStart } from '~/utils';
-import { toLavaHtmlAST, LavaHtmlNode } from '~/parser/ast';
+import { toLavaHtmlAST, LavaHtmlNode } from '~/parser/stage-2-ast';
 
-function parse(
+export function parse(
   text: string,
   _parsers: Parsers,
   _opts: ParserOptions<LavaHtmlNode>,

@@ -11,6 +11,13 @@
       "options": {
         "printWidth": 100
       }
+    },
+    {
+      "files": "*.lava",
+      "options": {
+        "singleQuote": false,
+        "printWidth": 600
+      }
     }
   ]
 }

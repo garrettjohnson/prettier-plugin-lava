@@ -1,7 +1,6 @@
 import {
   HtmlSelfClosingElement,
   LavaHtmlNode,
-  LavaParserOptions,
   NodeTypes,
   TextNode,
   LavaNode,
@@ -12,6 +11,8 @@ import {
   HtmlComment,
   HtmlElement,
   LavaTag,
+  AttributeNode,
+  LavaDrop,
 } from '~/types';
 import { isEmpty } from '~/printer/utils/array';
 
@@ -55,9 +56,7 @@ export function isTextLikeNode(
   return !!node && node.type === NodeTypes.TextNode;
 }
 
-export function isLavaNode(
-  node: LavaHtmlNode | undefined,
-): node is LavaNode {
+export function isLavaNode(node: LavaHtmlNode | undefined): node is LavaNode {
   return !!node && LavaNodeTypes.includes(node.type as any);
 }
 
@@ -76,6 +75,15 @@ export function isHtmlNode(node: LavaHtmlNode | undefined): node is HtmlNode {
   return !!node && HtmlNodeTypes.includes(node.type as any);
 }
 
+export function isAttributeNode(
+  node: LavaHtmlNode,
+): node is AttributeNode & { parentNode: HtmlNode } {
+  return (
+    isHtmlNode(node.parentNode) &&
+    node.parentNode.attributes.indexOf(node as AttributeNode) !== -1
+  );
+}
+
 export function hasNonTextChild(node: LavaHtmlNode) {
   return (
     (node as any).children &&
@@ -85,10 +93,7 @@ export function hasNonTextChild(node: LavaHtmlNode) {
   );
 }
 
-export function shouldPreserveContent(
-  node: LavaHtmlNode,
-  _options: LavaParserOptions,
-) {
+export function shouldPreserveContent(node: LavaHtmlNode) {
   // // unterminated node in ie conditional comment
   // // e.g. <!--[if lt IE 9]><html><![endif]-->
   // if (
@@ -106,28 +111,85 @@ export function shouldPreserveContent(
   //   return true;
   // }
 
-  // TODO: handle non-text children in <pre>
-  if (
-    isPreLikeNode(node) &&
-    (node as any).children &&
-    (node as any).children.some((child: any) => !isTextLikeNode(child))
-  ) {
+  // TODO: Handle pre correctly?
+  if (isPreLikeNode(node)) {
     return true;
   }
 
   return false;
 }
 
-export function isPrettierIgnoreNode(node: LavaHtmlNode | undefined) {
+export function isPrettierIgnoreHtmlNode(
+  node: LavaHtmlNode | undefined,
+): node is HtmlComment {
   return (
-    node &&
+    !!node &&
     node.type === NodeTypes.HtmlComment &&
-    /^\s*prettier-ignore/m.test(node.body)
+    /^\s*prettier-ignore(?=\s|$)/m.test(node.body)
   );
+}
+
+export function isPrettierIgnoreLavaNode(
+  node: LavaHtmlNode | undefined,
+): node is LavaTag {
+  return (
+    !!node &&
+    node.type === NodeTypes.LavaTag &&
+    node.name === '#' &&
+    /^\s*prettier-ignore(?=\s|$)/m.test(node.markup)
+  );
+}
+
+export function isPrettierIgnoreNode(
+  node: LavaHtmlNode | undefined,
+): node is HtmlComment | LavaTag {
+  return isPrettierIgnoreLavaNode(node) || isPrettierIgnoreHtmlNode(node);
 }
 
 export function hasPrettierIgnore(node: LavaHtmlNode) {
   return isPrettierIgnoreNode(node) || isPrettierIgnoreNode(node.prev);
+}
+
+function getPrettierIgnoreAttributeCommentData(value: string): boolean {
+  const match = value
+    .trim()
+    .match(/prettier-ignore-attribute(?:s?)(?:\s+(.+))?$/s);
+
+  if (!match) {
+    return false;
+  }
+
+  if (!match[1]) {
+    return true;
+  }
+
+  // TODO We should support 'prettier-ignore-attribute a,b,c' and allow users to not
+  // format the insides of some attributes.
+  //
+  // But since we don't reformat the insides of attributes yet (because of
+  // issue #4), that feature doesn't really make sense.
+  //
+  // For now, we'll only support `prettier-ignore-attribute`
+  //
+  // https://github.com/Shopify/prettier-plugin-lava/issues/4
+  //
+  // return match[1].split(/\s+/);
+  return true;
+}
+
+export function isPrettierIgnoreAttributeNode(
+  node: LavaHtmlNode | undefined,
+): boolean {
+  if (!node) return false;
+  if (node.type === NodeTypes.HtmlComment) {
+    return getPrettierIgnoreAttributeCommentData(node.body);
+  }
+
+  if (node.type === NodeTypes.LavaTag && node.name === '#') {
+    return getPrettierIgnoreAttributeCommentData(node.markup);
+  }
+
+  return false;
 }
 
 export function forceNextEmptyLine(node: LavaHtmlNode | undefined) {
@@ -150,8 +212,7 @@ export function forceBreakContent(node: LavaHtmlNode) {
     forceBreakChildren(node) ||
     (node.type === NodeTypes.HtmlElement &&
       node.children.length > 0 &&
-      typeof node.name === 'string' &&
-      (['body', 'script', 'style'].includes(node.name) ||
+      (isTagNameIncluded(['body', 'script', 'style'], node.name) ||
         node.children.some((child) => hasNonTextChild(child)))) ||
     (node.firstChild &&
       node.firstChild === node.lastChild &&
@@ -167,8 +228,7 @@ export function forceBreakChildren(node: LavaHtmlNode) {
   return (
     node.type === NodeTypes.HtmlElement &&
     node.children.length > 0 &&
-    typeof node.name === 'string' &&
-    (['html', 'head', 'ul', 'ol', 'select'].includes(node.name) ||
+    (isTagNameIncluded(['html', 'head', 'ul', 'ol', 'select'], node.name) ||
       (node.cssDisplay.startsWith('table') && node.cssDisplay !== 'table-cell'))
   );
 }
@@ -179,10 +239,7 @@ export function preferHardlineAsSurroundingSpaces(node: LavaHtmlNode) {
     case NodeTypes.HtmlComment:
       return true;
     case NodeTypes.HtmlElement:
-      return (
-        typeof node.name === 'string' &&
-        ['script', 'select'].includes(node.name)
-      );
+      return isTagNameIncluded(['script', 'select'], node.name);
     case NodeTypes.LavaTag:
       if (
         (node.prev && isTextLikeNode(node.prev)) ||
@@ -211,7 +268,8 @@ export function preferHardlineAsTrailingSpaces(node: LavaHtmlNode) {
     (isLavaNode(node) &&
       node.next &&
       (isLavaNode(node.next) || isHtmlNode(node.next))) ||
-    (node.type === NodeTypes.HtmlElement && node.name === 'br') ||
+    (node.type === NodeTypes.HtmlElement &&
+      isTagNameIncluded(['br'], node.name)) ||
     hasSurroundingLineBreak(node)
   );
 }
@@ -278,4 +336,12 @@ function hasLineBreakInRange(source: string, start: number, end: number) {
 
 export function getLastDescendant(node: LavaHtmlNode): LavaHtmlNode {
   return node.lastChild ? getLastDescendant(node.lastChild) : node;
+}
+
+function isTagNameIncluded(
+  collection: string[],
+  name: (TextNode | LavaDrop)[],
+): boolean {
+  if (name.length !== 1 || name[0].type !== NodeTypes.TextNode) return false;
+  return collection.includes(name[0].value);
 }

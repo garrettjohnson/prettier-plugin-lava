@@ -1,15 +1,20 @@
 import { AstPath, Doc, doc } from 'prettier';
 import {
-  LavaTag,
+  LavaAstPath,
   LavaBranch,
   LavaDrop,
-  LavaAstPath,
   LavaParserOptions,
   LavaPrinter,
-  NodeTypes,
   LavaPrinterArgs,
+  LavaTag,
+  LavaTagNamed,
+  LavaBranchNamed,
+  NamedTags,
+  NodeTypes,
+  LavaRawTag,
+  LavaStatement,
 } from '~/types';
-import { isBranchedTag } from '~/parser/ast';
+import { isBranchedTag } from '~/parser/stage-2-ast';
 import { assertNever } from '~/utils';
 
 import {
@@ -19,24 +24,30 @@ import {
   hasMeaningfulLackOfDanglingWhitespace,
   isDeeplyNested,
   isEmpty,
-  isHtmlNode,
   markupLines,
   originallyHadLineBreaks,
   reindent,
   trim,
+  hasLineBreakInRange,
+  isAttributeNode,
+  shouldPreserveContent,
+  FORCE_FLAT_GROUP_ID,
+  last,
 } from '~/printer/utils';
 
 import { printChildren } from '~/printer/print/children';
 
 const LAVA_TAGS_THAT_ALWAYS_BREAK = ['for', 'case'];
 
-const { builders } = doc;
-const { group, hardline, ifBreak, indent, join, line, softline } = builders;
+const { builders, utils } = doc;
+const { group, hardline, ifBreak, indent, join, line, softline, literalline } =
+  builders;
+const { replaceTextEndOfLine } = doc.utils as any;
 
 export function printLavaDrop(
   path: LavaAstPath,
   _options: LavaParserOptions,
-  _print: LavaPrinter,
+  print: LavaPrinter,
   { leadingSpaceGroupId, trailingSpaceGroupId }: LavaPrinterArgs,
 ) {
   const node: LavaDrop = path.getValue() as LavaDrop;
@@ -51,8 +62,20 @@ export function printLavaDrop(
     trailingSpaceGroupId,
   );
 
+  if (typeof node.markup !== 'string') {
+    const whitespace = node.markup.filters.length > 0 ? line : ' ';
+    return group([
+      '{{',
+      whitespaceStart,
+      indent([whitespace, path.call(print, 'markup')]),
+      whitespace,
+      whitespaceEnd,
+      '}}',
+    ]);
+  }
+
   // This should probably be better than this but it'll do for now.
-  const lines = markupLines(node);
+  const lines = markupLines(node.markup);
   if (lines.length > 1) {
     return group([
       '{{',
@@ -75,15 +98,196 @@ export function printLavaDrop(
   ]);
 }
 
-export function printLavaBlockStart(
-  path: AstPath<LavaTag | LavaBranch>,
-  leadingSpaceGroupId: symbol | symbol[] | undefined,
-  trailingSpaceGroupId: symbol | symbol[] | undefined,
+function printNamedLavaBlockStart(
+  path: AstPath<LavaTagNamed | LavaBranchNamed>,
+  _options: LavaParserOptions,
+  print: LavaPrinter,
+  args: LavaPrinterArgs,
+  whitespaceStart: Doc,
+  whitespaceEnd: Doc,
 ): Doc {
   const node = path.getValue();
-  if (!node.name) return '';
+  const { isLavaStatement } = args;
 
-  const lines = markupLines(node);
+  // This is slightly more verbose than 3 ternaries, but I feel like I
+  // should make it obvious that these three things work in tandem on the
+  // same conditional.
+  const { wrapper, prefix, suffix } = (() => {
+    if (isLavaStatement) {
+      return {
+        wrapper: utils.removeLines,
+        prefix: '',
+        suffix: () => '',
+      };
+    } else {
+      return {
+        wrapper: group,
+        prefix: ['{%', whitespaceStart, ' '],
+        suffix: (trailingWhitespace: Doc) => [
+          trailingWhitespace,
+          whitespaceEnd,
+          '%}',
+        ],
+      };
+    }
+  })();
+
+  const tag = (trailingWhitespace: Doc) =>
+    wrapper([
+      ...prefix,
+      node.name,
+      ' ',
+      indent(path.call((p) => print(p, args), 'markup')),
+      ...suffix(trailingWhitespace),
+    ]);
+
+  const tagWithArrayMarkup = (whitespace: Doc) =>
+    wrapper([
+      ...prefix,
+      node.name,
+      ' ',
+      indent([
+        join(
+          [',', line],
+          path.map((p) => print(p, args), 'markup'),
+        ),
+      ]),
+      ...suffix(whitespace),
+    ]);
+
+  switch (node.name) {
+    case NamedTags.echo: {
+      const trailingWhitespace = node.markup.filters.length > 0 ? line : ' ';
+      return tag(trailingWhitespace);
+    }
+
+    case NamedTags.assign: {
+      const trailingWhitespace =
+        node.markup.value.filters.length > 0 ? line : ' ';
+      return tag(trailingWhitespace);
+    }
+
+    case NamedTags.cycle: {
+      const whitespace = node.markup.args.length > 1 ? line : ' ';
+      return wrapper([
+        ...prefix,
+        node.name,
+        // We want to break after the groupName
+        node.markup.groupName ? ' ' : '',
+        indent(path.call((p) => print(p, args), 'markup')),
+        ...suffix(whitespace),
+      ]);
+    }
+
+    case NamedTags.include:
+    case NamedTags.render: {
+      const markup = node.markup;
+      const trailingWhitespace =
+        markup.args.length > 0 || (markup.variable && markup.alias)
+          ? line
+          : ' ';
+      return tag(trailingWhitespace);
+    }
+
+    case NamedTags.capture:
+    case NamedTags.increment:
+    case NamedTags.decrement:
+    case NamedTags.layout:
+    case NamedTags.section: {
+      return tag(' ');
+    }
+
+    case NamedTags.form: {
+      const trailingWhitespace = node.markup.length > 1 ? line : ' ';
+      return tagWithArrayMarkup(trailingWhitespace);
+    }
+
+    case NamedTags.tablerow:
+    case NamedTags.for: {
+      const trailingWhitespace =
+        node.markup.reversed || node.markup.args.length > 0 ? line : ' ';
+      return tag(trailingWhitespace);
+    }
+
+    case NamedTags.paginate: {
+      return tag(line);
+    }
+
+    case NamedTags.if:
+    case NamedTags.elsif:
+    case NamedTags.unless: {
+      const trailingWhitespace = [
+        NodeTypes.Comparison,
+        NodeTypes.LogicalExpression,
+      ].includes(node.markup.type)
+        ? line
+        : ' ';
+      return tag(trailingWhitespace);
+    }
+
+    case NamedTags.case: {
+      return tag(' ');
+    }
+
+    case NamedTags.when: {
+      const trailingWhitespace = node.markup.length > 1 ? line : ' ';
+      return tagWithArrayMarkup(trailingWhitespace);
+    }
+
+    case NamedTags.lava: {
+      return group([
+        ...prefix,
+        node.name,
+        indent([
+          hardline,
+          join(
+            hardline,
+            path.map((p) => {
+              const curr = p.getValue();
+              return [
+                getSpaceBetweenLines(curr.prev as LavaStatement | null, curr),
+                print(p, { ...args, isLavaStatement: true }),
+              ];
+            }, 'markup'),
+          ),
+        ]),
+        ...suffix(hardline),
+      ]);
+    }
+
+    default: {
+      return assertNever(node);
+    }
+  }
+}
+
+function printLavaStatement(
+  path: AstPath<Extract<LavaTag, { name: string; markup: string }>>,
+  _options: LavaParserOptions,
+  _print: LavaPrinter,
+  _args: LavaPrinterArgs,
+): Doc {
+  const node = path.getValue();
+  const shouldSkipLeadingSpace =
+    node.markup.trim() === '' ||
+    (node.name === '#' && node.markup.startsWith('#'));
+  return doc.utils.removeLines([
+    node.name,
+    shouldSkipLeadingSpace ? '' : ' ',
+    node.markup,
+  ]);
+}
+
+export function printLavaBlockStart(
+  path: AstPath<LavaTag | LavaBranch>,
+  options: LavaParserOptions,
+  print: LavaPrinter,
+  args: LavaPrinterArgs = {},
+): Doc {
+  const node = path.getValue();
+  const { leadingSpaceGroupId, trailingSpaceGroupId } = args;
+
+  if (!node.name) return '';
 
   const whitespaceStart = getWhitespaceTrim(
     node.whitespaceStart,
@@ -95,6 +299,28 @@ export function printLavaBlockStart(
     needsBlockStartTrailingWhitespaceStrippingOnBreak(node),
     trailingSpaceGroupId,
   );
+
+  if (typeof node.markup !== 'string') {
+    return printNamedLavaBlockStart(
+      path as AstPath<LavaTagNamed | LavaBranchNamed>,
+      options,
+      print,
+      args,
+      whitespaceStart,
+      whitespaceEnd,
+    );
+  }
+
+  if (args.isLavaStatement) {
+    return printLavaStatement(
+      path as AstPath<Extract<LavaTag, { name: string; markup: string }>>,
+      options,
+      print,
+      args,
+    );
+  }
+
+  const lines = markupLines(node.markup);
 
   if (node.name === 'lava') {
     return group([
@@ -135,11 +361,16 @@ export function printLavaBlockStart(
 
 export function printLavaBlockEnd(
   path: AstPath<LavaTag>,
-  leadingSpaceGroupId: symbol | symbol[] | undefined,
-  trailingSpaceGroupId: symbol | symbol[] | undefined,
+  _options: LavaParserOptions,
+  _print: LavaPrinter,
+  args: LavaPrinterArgs = {},
 ): Doc {
   const node = path.getValue();
+  const { isLavaStatement, leadingSpaceGroupId, trailingSpaceGroupId } = args;
   if (!node.children || !node.blockEndPosition) return '';
+  if (isLavaStatement) {
+    return ['end', node.name];
+  }
   const whitespaceStart = getWhitespaceTrim(
     node.delimiterWhitespaceStart ?? '',
     needsBlockEndLeadingWhitespaceStrippingOnBreak(node),
@@ -159,27 +390,53 @@ export function printLavaBlockEnd(
   ]);
 }
 
+function getNodeContent(node: LavaTag) {
+  if (!node.children || !node.blockEndPosition) return '';
+  return node.source.slice(
+    node.blockStartPosition.end,
+    node.blockEndPosition.start,
+  );
+}
+
 export function printLavaTag(
   path: AstPath<LavaTag>,
   options: LavaParserOptions,
   print: LavaPrinter,
-  { leadingSpaceGroupId, trailingSpaceGroupId }: LavaPrinterArgs = {},
+  args: LavaPrinterArgs,
 ): Doc {
+  const { leadingSpaceGroupId, trailingSpaceGroupId } = args;
   const node = path.getValue();
   if (!node.children || !node.blockEndPosition) {
-    return printLavaBlockStart(
-      path,
-      leadingSpaceGroupId,
-      trailingSpaceGroupId,
-    );
+    return printLavaBlockStart(path, options, print, args);
   }
+
+  if (!args.isLavaStatement && shouldPreserveContent(node)) {
+    return [
+      printLavaBlockStart(path, options, print, {
+        ...args,
+        leadingSpaceGroupId,
+        trailingSpaceGroupId: FORCE_FLAT_GROUP_ID,
+      }),
+      ...replaceTextEndOfLine(getNodeContent(node)),
+      printLavaBlockEnd(path, options, print, {
+        ...args,
+        leadingSpaceGroupId: FORCE_FLAT_GROUP_ID,
+        trailingSpaceGroupId,
+      }),
+    ];
+  }
+
   const tagGroupId = Symbol('tag-group');
-  const blockStart = printLavaBlockStart(
-    path,
+  const blockStart = printLavaBlockStart(path, options, print, {
+    ...args,
     leadingSpaceGroupId,
-    tagGroupId,
-  ); // {% if ... %}
-  const blockEnd = printLavaBlockEnd(path, tagGroupId, trailingSpaceGroupId); // {% endif %}
+    trailingSpaceGroupId: tagGroupId,
+  }); // {% if ... %}
+  const blockEnd = printLavaBlockEnd(path, options, print, {
+    ...args,
+    leadingSpaceGroupId: tagGroupId,
+    trailingSpaceGroupId,
+  }); // {% endif %}
 
   let body: Doc = [];
 
@@ -188,6 +445,7 @@ export function printLavaTag(
       path.map(
         (p) =>
           print(p, {
+            ...args,
             leadingSpaceGroupId: tagGroupId,
             trailingSpaceGroupId: tagGroupId,
           }),
@@ -199,27 +457,84 @@ export function printLavaTag(
     body = indent([
       innerLeadingWhitespace(node),
       printChildren(path, options, print, {
+        ...args,
         leadingSpaceGroupId: tagGroupId,
         trailingSpaceGroupId: tagGroupId,
       }),
     ]);
   }
 
-  return group([blockStart, body, innerTrailingWhitespace(node), blockEnd], {
-    id: tagGroupId,
-    shouldBreak:
-      LAVA_TAGS_THAT_ALWAYS_BREAK.includes(node.name) ||
-      originallyHadLineBreaks(path, options) ||
-      isAttributeNode(node) ||
-      isDeeplyNested(node),
-  });
+  return group(
+    [blockStart, body, innerTrailingWhitespace(node, args), blockEnd],
+    {
+      id: tagGroupId,
+      shouldBreak:
+        LAVA_TAGS_THAT_ALWAYS_BREAK.includes(node.name) ||
+        originallyHadLineBreaks(path, options) ||
+        isAttributeNode(node) ||
+        isDeeplyNested(node),
+    },
+  );
 }
 
-function isAttributeNode(node: LavaTag) {
-  return (
-    isHtmlNode(node.parentNode) &&
-    node.parentNode.attributes.indexOf(node) !== -1
-  );
+export function printLavaRawTag(
+  path: AstPath<LavaRawTag>,
+  options: LavaParserOptions,
+  print: LavaPrinter,
+  { isLavaStatement }: LavaPrinterArgs,
+): Doc {
+  let body: Doc = [];
+  const node = path.getValue();
+  const hasEmptyBody = node.body.value.trim() === '';
+  const shouldNotIndentBody = node.name === 'schema' && !options.indentSchema;
+  const shouldPrintAsIs =
+    node.isIndentationSensitive ||
+    !hasLineBreakInRange(
+      node.source,
+      node.body.position.start,
+      node.body.position.end,
+    );
+  const blockStart = isLavaStatement
+    ? [node.name]
+    : group([
+        '{%',
+        node.whitespaceStart,
+        ' ',
+        node.name,
+        ' ',
+        node.markup ? `${node.markup} ` : '',
+        node.whitespaceEnd,
+        '%}',
+      ]);
+  const blockEnd = isLavaStatement
+    ? ['end', node.name]
+    : [
+        '{%',
+        node.whitespaceStart,
+        ' ',
+        'end',
+        node.name,
+        ' ',
+        node.whitespaceEnd,
+        '%}',
+      ];
+
+  if (shouldPrintAsIs) {
+    body = [
+      node.source.slice(
+        node.blockStartPosition.end,
+        node.blockEndPosition.start,
+      ),
+    ];
+  } else if (hasEmptyBody) {
+    body = [hardline];
+  } else if (shouldNotIndentBody) {
+    body = [hardline, path.call(print, 'body'), hardline];
+  } else {
+    body = [indent([hardline, path.call(print, 'body')]), hardline];
+  }
+
+  return [blockStart, ...body, blockEnd];
 }
 
 function innerLeadingWhitespace(node: LavaTag | LavaBranch) {
@@ -241,8 +556,12 @@ function innerLeadingWhitespace(node: LavaTag | LavaBranch) {
   return softline;
 }
 
-function innerTrailingWhitespace(node: LavaTag | LavaBranch) {
+function innerTrailingWhitespace(
+  node: LavaTag | LavaBranch,
+  args: LavaPrinterArgs,
+) {
   if (
+    (!args.isLavaStatement && shouldPreserveContent(node)) ||
     node.type === NodeTypes.LavaBranch ||
     !node.blockEndPosition ||
     !node.lastChild
@@ -293,11 +612,19 @@ function printLavaDefaultBranch(
     return ifBreak('', ' ');
   }
 
+  const shouldAddTrailingNewline =
+    branch.next &&
+    branch.children.length > 0 &&
+    branch.source
+      .slice(last(branch.children).position.end, branch.next.position.start)
+      .replace(/ |\t/g, '').length >= 2;
+
   // Otherwise print the branch as usual
   // {% if A %} content...{% endif %}
   return indent([
     innerLeadingWhitespace(parentNode),
     printChildren(path, options, print, args),
+    shouldAddTrailingNewline ? literalline : '',
   ]);
 }
 
@@ -321,17 +648,20 @@ export function printLavaBranch(
   const shouldCollapseSpace = leftSibling && isEmpty(leftSibling.children);
   const outerLeadingWhitespace =
     branch.hasLeadingWhitespace && !shouldCollapseSpace ? line : softline;
+  const shouldAddTrailingNewline =
+    branch.next &&
+    branch.children.length > 0 &&
+    branch.source
+      .slice(last(branch.children).position.end, branch.next.position.start)
+      .replace(/ |\t/g, '').length >= 2;
 
   return [
     outerLeadingWhitespace,
-    printLavaBlockStart(
-      path as AstPath<LavaBranch>,
-      args.leadingSpaceGroupId,
-      args.trailingSpaceGroupId,
-    ),
+    printLavaBlockStart(path as AstPath<LavaBranch>, options, print, args),
     indent([
       innerLeadingWhitespace(branch),
       printChildren(path, options, print, args),
+      shouldAddTrailingNewline ? literalline : '',
     ]),
   ];
 }
@@ -411,4 +741,27 @@ function needsBlockEndLeadingWhitespaceStrippingOnBreak(node: LavaTag) {
 
 function cleanDoc(doc: Doc[]): Doc[] {
   return doc.filter((x) => x !== '');
+}
+
+function getSchema(contents: string, options: LavaParserOptions) {
+  try {
+    return [JSON.stringify(JSON.parse(contents), null, options.tabWidth), true];
+  } catch (e) {
+    return [contents, false];
+  }
+}
+
+function getSpaceBetweenLines(
+  prev: LavaStatement | null,
+  curr: LavaStatement,
+): Doc {
+  if (!prev) return '';
+  const source = curr.source;
+  const whitespaceBetweenNodes = source.slice(
+    prev.position.end,
+    curr.position.start,
+  );
+  const hasMoreThanOneNewLine =
+    (whitespaceBetweenNodes.match(/\n/g) || []).length > 1;
+  return hasMoreThanOneNewLine ? hardline : '';
 }
