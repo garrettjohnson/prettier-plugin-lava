@@ -5,6 +5,7 @@
   "semi": true,
   "singleQuote": true,
   "printWidth": 80,
+  "bracketSameLine": true,
   "overrides": [
     {
       "files": "*.spec.ts",
@@ -15,6 +16,7 @@
     {
       "files": "*.lava",
       "options": {
+        "bracketSameLine": true,
         "singleQuote": false,
         "printWidth": 600
       }

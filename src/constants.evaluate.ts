@@ -49,7 +49,7 @@ export const CSS_DISPLAY_LAVA_TAGS: Record<string, string> = {
   if: 'inline',
   unless: 'inline',
   else: 'inline',
-  elsif: 'inline',
+  elseif: 'inline',
   case: 'inline',
   when: 'inline',
 

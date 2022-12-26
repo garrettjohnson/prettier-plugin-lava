@@ -246,7 +246,7 @@ export interface LavaTagTablerow
 export interface LavaTagIf extends LavaTagConditional<NamedTags.if> {}
 export interface LavaTagUnless extends LavaTagConditional<NamedTags.unless> {}
 export interface LavaBranchElsif
-  extends LavaBranchNode<NamedTags.elsif, LavaConditionalExpression> {}
+  extends LavaBranchNode<NamedTags.elseif, LavaConditionalExpression> {}
 export interface LavaTagConditional<Name>
   extends LavaTagNode<Name, LavaConditionalExpression> {}
 
@@ -310,7 +310,7 @@ export type LavaBranchNamed = LavaBranchElsif | LavaBranchWhen;
 
 interface LavaBranchNode<Name, Markup> extends ASTNode<NodeTypes.LavaBranch> {
   /**
-   * e.g. else, elsif, when | null when in the main branch
+   * e.g. else, elseif, when | null when in the main branch
    */
   name: Name;
 
@@ -501,7 +501,7 @@ function isLavaBranchDisguisedAsTag(
 ): node is LavaTagBaseCase {
   return (
     node.type === NodeTypes.LavaTag &&
-    ['else', 'elsif', 'when'].includes(node.name)
+    ['else', 'elseif', 'when'].includes(node.name)
   );
 }
 
@@ -1038,7 +1038,7 @@ function toNamedLavaTag(
       };
     }
 
-    case NamedTags.elsif: {
+    case NamedTags.elseif: {
       return {
         ...lavaBranchBaseAttributes(node),
         name: node.name,

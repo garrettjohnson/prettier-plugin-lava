@@ -62,7 +62,7 @@ export enum NamedTags {
   cycle = 'cycle',
   decrement = 'decrement',
   echo = 'echo',
-  elsif = 'elsif',
+  elseif = 'elseif',
   for = 'for',
   form = 'form',
   if = 'if',

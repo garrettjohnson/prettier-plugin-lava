@@ -91,7 +91,7 @@ export interface LavaTag extends ASTNode<NodeTypes.LavaTag> {
 
 export interface LavaBranch extends ASTNode<NodeTypes.LavaBranch> {
   /**
-   * e.g. else, elsif, when | null when in the main branch
+   * e.g. else, elseif, when | null when in the main branch
    */
   name: string | null;
 
@@ -198,7 +198,7 @@ export function isBranchedTag(node: LavaHtmlNode) {
 function isBranchTag(node: LavaHtmlNode) {
   return (
     node.type === NodeTypes.LavaTag &&
-    ['else', 'elsif', 'when'].includes(node.name)
+    ['else', 'elseif', 'when'].includes(node.name)
   );
 }
 

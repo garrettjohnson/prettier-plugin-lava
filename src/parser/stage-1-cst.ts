@@ -222,7 +222,7 @@ export interface ConcreteLavaTagOpenIf
 export interface ConcreteLavaTagOpenUnless
   extends ConcreteLavaTagOpenNode<NamedTags.unless, ConcreteLavaCondition[]> {}
 export interface ConcreteLavaTagElsif
-  extends ConcreteLavaTagNode<NamedTags.elsif, ConcreteLavaCondition[]> {}
+  extends ConcreteLavaTagNode<NamedTags.elseif, ConcreteLavaCondition[]> {}
 
 export interface ConcreteLavaCondition
   extends ConcreteBasicNode<ConcreteNodeTypes.Condition> {
