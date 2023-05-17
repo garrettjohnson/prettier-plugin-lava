@@ -56,7 +56,9 @@ export function isTextLikeNode(
   return !!node && node.type === NodeTypes.TextNode;
 }
 
-export function isLavaNode(node: LavaHtmlNode | undefined): node is LavaNode {
+export function isLavaNode(
+  node: LavaHtmlNode | undefined,
+): node is LavaNode {
   return !!node && LavaNodeTypes.includes(node.type as any);
 }
 

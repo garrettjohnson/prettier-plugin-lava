@@ -4,7 +4,9 @@ export const lavaHtmlGrammars = ohm.grammars(
   require('../../grammar/lava-html.ohm.js'),
 );
 
+export const lavaGrammar = lavaHtmlGrammars['Lava'];
 export const lavaHtmlGrammar = lavaHtmlGrammars['LavaHTML'];
+export const lavaStatementsGrammar = lavaHtmlGrammars['LavaStatement'];
 
 // see ../../grammar/lava-html.ohm for full list
 export const BLOCKS = (

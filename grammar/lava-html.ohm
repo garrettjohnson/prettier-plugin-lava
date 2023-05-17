@@ -57,6 +57,7 @@ Lava <: Helpers {
     | lavaTagLava
     | lavaTagRender
     | lavaTagSection
+    | lavaTagSections
     | lavaTagWhen
     | lavaTagBaseCase
 
@@ -96,6 +97,9 @@ Lava <: Helpers {
 
   lavaTagSection = lavaTagRule<"section", lavaTagSectionMarkup>
   lavaTagSectionMarkup = lavaString space*
+
+  lavaTagSections = lavaTagRule<"sections", lavaTagSectionsMarkup>
+  lavaTagSectionsMarkup = lavaString space*
 
   lavaTagLayout = lavaTagRule<"layout", lavaTagLayoutMarkup>
   lavaTagLayoutMarkup = lavaExpression space*
@@ -160,7 +164,7 @@ Lava <: Helpers {
 
   lavaTagOpenPaginate = lavaTagOpenRule<"paginate", lavaTagOpenPaginateMarkup>
   lavaTagOpenPaginateMarkup =
-    lavaExpression space+ "by" space+ lavaExpression (argumentSeparatorOptionalComma tagArguments)? space*
+    lavaExpression space+ "by" space+ lavaExpression argumentSeparatorOptionalComma tagArguments space*
 
   lavaDrop = "{{" "-"? space* lavaDropCases "-"? "}}"
   lavaDropCases = lavaVariable | lavaDropBaseCase
@@ -654,10 +658,11 @@ LavaHTML <: Lava {
     | HtmlRawTagImpl<"svg">
 
   HtmlRawTagImpl<name> =
-    #("<" name) AttrList ">" #(anyExceptStar<endTag<name>> endTag<name>)
-
-  endTag<name> =
-    "</" name space* ">"
+    TagStart<name>
+      (HtmlRawTagImpl<name> | AnyExceptPlus<(TagStart<name> | TagEnd<name>)>)*
+    TagEnd<name>
+  TagStart<name> = "<" name AttrList ">"
+  TagEnd<name> = "</" name ">"
 
   HtmlVoidElement =
     #("<" voidElementName &(space | "/" | ">")) AttrList "/"? ">"

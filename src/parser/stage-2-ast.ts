@@ -43,6 +43,7 @@ import {
   ConcreteLavaTagClose,
   ConcreteNodeTypes,
   ConcreteTextNode,
+  LavaCST,
   LavaHtmlCST,
   toLavaHtmlCST,
   ConcreteHtmlSelfClosingElement,
@@ -81,6 +82,7 @@ import {
 import { assertNever, deepGet, dropLast } from '~/utils';
 import { LavaHTMLASTParsingError } from '~/parser/errors';
 import { TAGS_WITHOUT_MARKUP } from '~/parser/grammar';
+import { toLavaCST } from '~/parser/stage-1-cst';
 
 interface HasPosition {
   locStart: number;
@@ -94,6 +96,24 @@ export type LavaHtmlNode =
   | HtmlDoctype
   | HtmlNode
   | AttributeNode
+  | LavaVariable
+  | LavaExpression
+  | LavaFilter
+  | LavaNamedArgument
+  | AssignMarkup
+  | CycleMarkup
+  | ForMarkup
+  | RenderMarkup
+  | PaginateMarkup
+  | RawMarkup
+  | RenderVariableExpression
+  | LavaLogicalExpression
+  | LavaComparison
+  | TextNode;
+
+export type LavaAST =
+  | DocumentNode
+  | LavaNode
   | LavaVariable
   | LavaExpression
   | LavaFilter
@@ -176,10 +196,12 @@ export type LavaTagNamed =
   | LavaTagPaginate
   | LavaTagRender
   | LavaTagSection
+  | LavaTagSections
   | LavaTagTablerow
   | LavaTagUnless;
 
-export interface LavaTagNode<Name, Markup> extends ASTNode<NodeTypes.LavaTag> {
+export interface LavaTagNode<Name, Markup>
+  extends ASTNode<NodeTypes.LavaTag> {
   /**
    * e.g. if, ifchanged, for, etc.
    */
@@ -244,9 +266,10 @@ export interface LavaTagTablerow
   extends LavaTagNode<NamedTags.tablerow, ForMarkup> {}
 
 export interface LavaTagIf extends LavaTagConditional<NamedTags.if> {}
-export interface LavaTagUnless extends LavaTagConditional<NamedTags.unless> {}
+export interface LavaTagUnless
+  extends LavaTagConditional<NamedTags.unless> {}
 export interface LavaBranchElsif
-  extends LavaBranchNode<NamedTags.elseif, LavaConditionalExpression> {}
+  extends LavaBranchNode<NamedTags.elsif, LavaConditionalExpression> {}
 export interface LavaTagConditional<Name>
   extends LavaTagNode<Name, LavaConditionalExpression> {}
 
@@ -283,6 +306,8 @@ export interface LavaTagInclude
 
 export interface LavaTagSection
   extends LavaTagNode<NamedTags.section, LavaString> {}
+export interface LavaTagSections
+  extends LavaTagNode<NamedTags.sections, LavaString> {}
 export interface LavaTagLayout
   extends LavaTagNode<NamedTags.layout, LavaExpression> {}
 
@@ -308,9 +333,10 @@ export type LavaBranch =
   | LavaBranchNamed;
 export type LavaBranchNamed = LavaBranchElsif | LavaBranchWhen;
 
-interface LavaBranchNode<Name, Markup> extends ASTNode<NodeTypes.LavaBranch> {
+interface LavaBranchNode<Name, Markup>
+  extends ASTNode<NodeTypes.LavaBranch> {
   /**
-   * e.g. else, elseif, when | null when in the main branch
+   * e.g. else, elsif, when | null when in the main branch
    */
   name: Name;
 
@@ -325,7 +351,8 @@ interface LavaBranchNode<Name, Markup> extends ASTNode<NodeTypes.LavaBranch> {
 }
 
 export interface LavaBranchUnnamed extends LavaBranchNode<null, string> {}
-export interface LavaBranchBaseCase extends LavaBranchNode<string, string> {}
+export interface LavaBranchBaseCase
+  extends LavaBranchNode<string, string> {}
 
 export interface LavaDrop extends ASTNode<NodeTypes.LavaDrop> {
   /**
@@ -488,6 +515,10 @@ export interface ASTNode<T> {
   source: string;
 }
 
+interface AstBuildOptions {
+  mode: 'strict' | 'tolerant';
+}
+
 export function isBranchedTag(node: LavaHtmlNode) {
   return (
     node.type === NodeTypes.LavaTag &&
@@ -501,8 +532,23 @@ function isLavaBranchDisguisedAsTag(
 ): node is LavaTagBaseCase {
   return (
     node.type === NodeTypes.LavaTag &&
-    ['else', 'elseif', 'when'].includes(node.name)
+    ['else', 'elsif', 'when'].includes(node.name)
   );
+}
+
+export function toLavaAST(source: string) {
+  const cst = toLavaCST(source);
+  const root: DocumentNode = {
+    type: NodeTypes.Document,
+    source: source,
+    children: cstToAst(cst, { mode: 'tolerant' }),
+    name: '#document',
+    position: {
+      start: 0,
+      end: source.length,
+    },
+  };
+  return root;
 }
 
 export function toLavaHtmlAST(source: string): DocumentNode {
@@ -510,7 +556,7 @@ export function toLavaHtmlAST(source: string): DocumentNode {
   const root: DocumentNode = {
     type: NodeTypes.Document,
     source: source,
-    children: cstToAst(cst),
+    children: cstToAst(cst, { mode: 'strict' }),
     name: '#document',
     position: {
       start: 0,
@@ -555,7 +601,10 @@ class ASTBuilder {
   }
 
   push(node: LavaHtmlNode) {
-    if (node.type === NodeTypes.LavaTag && isLavaBranchDisguisedAsTag(node)) {
+    if (
+      node.type === NodeTypes.LavaTag &&
+      isLavaBranchDisguisedAsTag(node)
+    ) {
       this.cursor.pop();
       this.cursor.pop();
       this.open(toNamedLavaBranchBaseCase(node));
@@ -668,9 +717,32 @@ function getName(
 }
 
 export function cstToAst(
-  cst: LavaHtmlCST | ConcreteAttributeNode[],
+  cst: LavaHtmlCST | LavaCST | ConcreteAttributeNode[],
+  options: AstBuildOptions,
 ): LavaHtmlNode[] {
   if (cst.length === 0) return [];
+
+  const builder = buildAst(cst, options);
+  const isStrictParser = options.mode === 'strict';
+
+  if (isStrictParser && builder.cursor.length !== 0) {
+    throw new LavaHTMLASTParsingError(
+      `Attempting to end parsing before ${builder.parent?.type} '${getName(
+        builder.parent,
+      )}' was closed`,
+      builder.source,
+      builder.source.length - 1,
+      builder.source.length,
+    );
+  }
+
+  return builder.ast;
+}
+
+function buildAst(
+  cst: LavaHtmlCST | LavaCST | ConcreteAttributeNode[],
+  options: AstBuildOptions,
+) {
   const builder = new ASTBuilder(cst[0].source);
 
   for (const node of cst) {
@@ -686,7 +758,7 @@ export function cstToAst(
       }
 
       case ConcreteNodeTypes.LavaTagOpen: {
-        builder.open(toLavaTag(node, { isBlockTag: true }));
+        builder.open(toLavaTag(node, { isBlockTag: true, ...options }));
         break;
       }
 
@@ -696,7 +768,7 @@ export function cstToAst(
       }
 
       case ConcreteNodeTypes.LavaTag: {
-        builder.push(toLavaTag(node));
+        builder.push(toLavaTag(node, { isBlockTag: false, ...options }));
         break;
       }
 
@@ -725,7 +797,7 @@ export function cstToAst(
       }
 
       case ConcreteNodeTypes.HtmlTagOpen: {
-        builder.open(toHtmlElement(node));
+        builder.open(toHtmlElement(node, options));
         break;
       }
 
@@ -735,12 +807,12 @@ export function cstToAst(
       }
 
       case ConcreteNodeTypes.HtmlVoidElement: {
-        builder.push(toHtmlVoidElement(node));
+        builder.push(toHtmlVoidElement(node, options));
         break;
       }
 
       case ConcreteNodeTypes.HtmlSelfClosingElement: {
-        builder.push(toHtmlSelfClosingElement(node));
+        builder.push(toHtmlSelfClosingElement(node, options));
         break;
       }
 
@@ -769,7 +841,7 @@ export function cstToAst(
           type: NodeTypes.HtmlRawNode,
           name: node.name,
           body: toRawMarkup(node),
-          attributes: toAttributes(node.attrList || []),
+          attributes: toAttributes(node.attrList || [], options),
           position: position(node),
           source: node.source,
           blockStartPosition: {
@@ -787,7 +859,7 @@ export function cstToAst(
       case ConcreteNodeTypes.AttrEmpty: {
         builder.push({
           type: NodeTypes.AttrEmpty,
-          name: cstToAst(node.name) as (TextNode | LavaDrop)[],
+          name: cstToAst(node.name, options) as (TextNode | LavaDrop)[],
           position: position(node),
           source: node.source,
         });
@@ -803,7 +875,7 @@ export function cstToAst(
               | NodeTypes.AttrSingleQuoted
               | NodeTypes.AttrDoubleQuoted
               | NodeTypes.AttrUnquoted,
-            name: cstToAst(node.name) as (TextNode | LavaDrop)[],
+            name: cstToAst(node.name, options) as (TextNode | LavaDrop)[],
             position: position(node),
             source: node.source,
 
@@ -811,7 +883,7 @@ export function cstToAst(
             attributePosition: { start: -1, end: -1 },
             value: [],
           };
-        const value = toAttributeValue(node.value);
+        const value = toAttributeValue(node.value, options);
         abstractNode.value = value;
         abstractNode.attributePosition = toAttributePosition(node, value);
         builder.push(abstractNode);
@@ -834,18 +906,7 @@ export function cstToAst(
     }
   }
 
-  if (builder.cursor.length !== 0) {
-    throw new LavaHTMLASTParsingError(
-      `Attempting to end parsing before ${builder.parent?.type} '${getName(
-        builder.parent,
-      )}' was closed`,
-      builder.source,
-      builder.source.length - 1,
-      builder.source.length,
-    );
-  }
-
-  return builder.ast;
+  return builder;
 }
 
 function toAttributePosition(
@@ -880,12 +941,16 @@ function toAttributePosition(
 
 function toAttributeValue(
   value: (ConcreteLavaNode | ConcreteTextNode)[],
+  options: AstBuildOptions,
 ): (LavaNode | TextNode)[] {
-  return cstToAst(value) as (LavaNode | TextNode)[];
+  return cstToAst(value, options) as (LavaNode | TextNode)[];
 }
 
-function toAttributes(attrList: ConcreteAttributeNode[]): AttributeNode[] {
-  return cstToAst(attrList) as AttributeNode[];
+function toAttributes(
+  attrList: ConcreteAttributeNode[],
+  options: AstBuildOptions,
+): AttributeNode[] {
+  return cstToAst(attrList, options) as AttributeNode[];
 }
 
 function lavaTagBaseAttributes(
@@ -917,15 +982,15 @@ function lavaBranchBaseAttributes(
 
 function toLavaTag(
   node: ConcreteLavaTag | ConcreteLavaTagOpen,
-  { isBlockTag } = { isBlockTag: false },
+  options: AstBuildOptions & { isBlockTag: boolean },
 ): LavaTag | LavaBranch {
   if (typeof node.markup !== 'string') {
-    return toNamedLavaTag(node as ConcreteLavaTagNamed);
-  } else if (isBlockTag) {
+    return toNamedLavaTag(node as ConcreteLavaTagNamed, options);
+  } else if (options.isBlockTag) {
     return {
       name: node.name,
       markup: markup(node.name, node.markup),
-      children: isBlockTag ? [] : undefined,
+      children: options.isBlockTag ? [] : undefined,
       ...lavaTagBaseAttributes(node),
     };
   }
@@ -938,6 +1003,7 @@ function toLavaTag(
 
 function toNamedLavaTag(
   node: ConcreteLavaTagNamed | ConcreteLavaTagOpenNamed,
+  options: AstBuildOptions,
 ): LavaTagNamed | LavaBranchNamed {
   switch (node.name) {
     case NamedTags.echo: {
@@ -999,6 +1065,13 @@ function toNamedLavaTag(
         markup: toExpression(node.markup) as LavaString,
       };
     }
+    case NamedTags.sections: {
+      return {
+        ...lavaTagBaseAttributes(node),
+        name: node.name,
+        markup: toExpression(node.markup) as LavaString,
+      };
+    }
 
     case NamedTags.form: {
       return {
@@ -1038,7 +1111,7 @@ function toNamedLavaTag(
       };
     }
 
-    case NamedTags.elseif: {
+    case NamedTags.elsif: {
       return {
         ...lavaBranchBaseAttributes(node),
         name: node.name,
@@ -1067,7 +1140,7 @@ function toNamedLavaTag(
       return {
         ...lavaTagBaseAttributes(node),
         name: node.name,
-        markup: cstToAst(node.markup) as LavaStatement[],
+        markup: cstToAst(node.markup, options) as LavaStatement[],
       };
     }
 
@@ -1077,7 +1150,9 @@ function toNamedLavaTag(
   }
 }
 
-function toNamedLavaBranchBaseCase(node: LavaTagBaseCase): LavaBranchBaseCase {
+function toNamedLavaBranchBaseCase(
+  node: LavaTagBaseCase,
+): LavaBranchBaseCase {
   return {
     name: node.name,
     type: NodeTypes.LavaBranch,
@@ -1091,7 +1166,9 @@ function toNamedLavaBranchBaseCase(node: LavaTagBaseCase): LavaBranchBaseCase {
   };
 }
 
-function toUnnamedLavaBranch(parentNode: LavaHtmlNode): LavaBranchUnnamed {
+function toUnnamedLavaBranch(
+  parentNode: LavaHtmlNode,
+): LavaBranchUnnamed {
   return {
     type: NodeTypes.LavaBranch,
     name: null,
@@ -1154,7 +1231,9 @@ function toPaginateMarkup(node: ConcretePaginateMarkup): PaginateMarkup {
   };
 }
 
-function toRawMarkup(node: ConcreteHtmlRawTag | ConcreteLavaRawTag): RawMarkup {
+function toRawMarkup(
+  node: ConcreteHtmlRawTag | ConcreteLavaRawTag,
+): RawMarkup {
   return {
     type: NodeTypes.RawMarkup,
     kind: toRawMarkupKind(node),
@@ -1235,7 +1314,9 @@ function toRawMarkupKindFromHtmlNode(node: ConcreteHtmlRawTag): RawMarkupKinds {
   }
 }
 
-function toRawMarkupKindFromLavaNode(node: ConcreteLavaRawTag): RawMarkupKinds {
+function toRawMarkupKindFromLavaNode(
+  node: ConcreteLavaRawTag,
+): RawMarkupKinds {
   switch (node.name) {
     case 'javascript':
       return RawMarkupKinds.javascript;
@@ -1420,7 +1501,9 @@ function toLavaArgument(node: ConcreteLavaArgument): LavaArgument {
   }
 }
 
-function toNamedArgument(node: ConcreteLavaNamedArgument): LavaNamedArgument {
+function toNamedArgument(
+  node: ConcreteLavaNamedArgument,
+): LavaNamedArgument {
   return {
     type: NodeTypes.NamedArgument,
     name: node.name,
@@ -1430,11 +1513,14 @@ function toNamedArgument(node: ConcreteLavaNamedArgument): LavaNamedArgument {
   };
 }
 
-function toHtmlElement(node: ConcreteHtmlTagOpen): HtmlElement {
+function toHtmlElement(
+  node: ConcreteHtmlTagOpen,
+  options: AstBuildOptions,
+): HtmlElement {
   return {
     type: NodeTypes.HtmlElement,
-    name: cstToAst(node.name) as (TextNode | LavaDrop)[],
-    attributes: toAttributes(node.attrList || []),
+    name: cstToAst(node.name, options) as (TextNode | LavaDrop)[],
+    attributes: toAttributes(node.attrList || [], options),
     position: position(node),
     blockStartPosition: position(node),
     blockEndPosition: { start: -1, end: -1 },
@@ -1443,11 +1529,14 @@ function toHtmlElement(node: ConcreteHtmlTagOpen): HtmlElement {
   };
 }
 
-function toHtmlVoidElement(node: ConcreteHtmlVoidElement): HtmlVoidElement {
+function toHtmlVoidElement(
+  node: ConcreteHtmlVoidElement,
+  options: AstBuildOptions,
+): HtmlVoidElement {
   return {
     type: NodeTypes.HtmlVoidElement,
     name: node.name,
-    attributes: toAttributes(node.attrList || []),
+    attributes: toAttributes(node.attrList || [], options),
     position: position(node),
     blockStartPosition: position(node),
     source: node.source,
@@ -1456,11 +1545,12 @@ function toHtmlVoidElement(node: ConcreteHtmlVoidElement): HtmlVoidElement {
 
 function toHtmlSelfClosingElement(
   node: ConcreteHtmlSelfClosingElement,
+  options: AstBuildOptions,
 ): HtmlSelfClosingElement {
   return {
     type: NodeTypes.HtmlSelfClosingElement,
-    name: cstToAst(node.name) as (TextNode | LavaDrop)[],
-    attributes: toAttributes(node.attrList || []),
+    name: cstToAst(node.name, options) as (TextNode | LavaDrop)[],
+    attributes: toAttributes(node.attrList || [], options),
     position: position(node),
     blockStartPosition: position(node),
     source: node.source,

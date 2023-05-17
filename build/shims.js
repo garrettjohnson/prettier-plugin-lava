@@ -1,11 +1,15 @@
 const fs = require('fs');
 const path = require('path');
 
+const grammarPath = path.join(__dirname, '../grammar');
+
 fs.writeFileSync(
-  path.join(__dirname, 'shims/lava-html-ohm.js'),
+  path.join(grammarPath, 'lava-html.ohm.js'),
   'module.exports = ' +
     'String.raw`' +
-    require('../grammar/lava-html.ohm.js').replace(/`/g, '${"`"}') +
+    fs
+      .readFileSync(path.join(grammarPath, 'lava-html.ohm'), 'utf8')
+      .replace(/`/g, '${"`"}') +
     '`;',
   'utf8',
 );

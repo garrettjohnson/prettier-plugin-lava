@@ -196,6 +196,9 @@ function printNamedLavaBlockStart(
     case NamedTags.section: {
       return tag(' ');
     }
+    case NamedTags.sections: {
+      return tag(' ');
+    }
 
     case NamedTags.form: {
       const trailingWhitespace = node.markup.length > 1 ? line : ' ';
@@ -214,7 +217,7 @@ function printNamedLavaBlockStart(
     }
 
     case NamedTags.if:
-    case NamedTags.elseif:
+    case NamedTags.elsif:
     case NamedTags.unless: {
       const trailingWhitespace = [
         NodeTypes.Comparison,

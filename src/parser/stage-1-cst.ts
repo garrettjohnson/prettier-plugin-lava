@@ -31,9 +31,13 @@
  */
 
 import { Parser } from 'prettier';
-import { Node } from 'ohm-js';
+import ohm, { Node } from 'ohm-js';
 import { toAST } from 'ohm-js/extras';
-import { lavaHtmlGrammar, lavaHtmlGrammars } from '~/parser/grammar';
+import {
+  lavaGrammar,
+  lavaHtmlGrammar,
+  lavaHtmlGrammars,
+} from '~/parser/grammar';
 import { LavaHTMLCSTParsingError } from '~/parser/errors';
 import { Comparators, NamedTags } from '~/types';
 
@@ -220,9 +224,12 @@ export interface ConcreteLavaTagWhen
 export interface ConcreteLavaTagOpenIf
   extends ConcreteLavaTagOpenNode<NamedTags.if, ConcreteLavaCondition[]> {}
 export interface ConcreteLavaTagOpenUnless
-  extends ConcreteLavaTagOpenNode<NamedTags.unless, ConcreteLavaCondition[]> {}
+  extends ConcreteLavaTagOpenNode<
+    NamedTags.unless,
+    ConcreteLavaCondition[]
+  > {}
 export interface ConcreteLavaTagElsif
-  extends ConcreteLavaTagNode<NamedTags.elseif, ConcreteLavaCondition[]> {}
+  extends ConcreteLavaTagNode<NamedTags.elsif, ConcreteLavaCondition[]> {}
 
 export interface ConcreteLavaCondition
   extends ConcreteBasicNode<ConcreteNodeTypes.Condition> {
@@ -241,7 +248,10 @@ export interface ConcreteLavaTagOpenForm
   extends ConcreteLavaTagOpenNode<NamedTags.form, ConcreteLavaArgument[]> {}
 
 export interface ConcreteLavaTagOpenFor
-  extends ConcreteLavaTagOpenNode<NamedTags.for, ConcreteLavaTagForMarkup> {}
+  extends ConcreteLavaTagOpenNode<
+    NamedTags.for,
+    ConcreteLavaTagForMarkup
+  > {}
 export interface ConcreteLavaTagForMarkup
   extends ConcreteBasicNode<ConcreteNodeTypes.ForMarkup> {
   variableName: string;
@@ -257,7 +267,10 @@ export interface ConcreteLavaTagOpenTablerow
   > {}
 
 export interface ConcreteLavaTagOpenPaginate
-  extends ConcreteLavaTagOpenNode<NamedTags.paginate, ConcretePaginateMarkup> {}
+  extends ConcreteLavaTagOpenNode<
+    NamedTags.paginate,
+    ConcretePaginateMarkup
+  > {}
 
 export interface ConcretePaginateMarkup
   extends ConcreteBasicNode<ConcreteNodeTypes.PaginateMarkup> {
@@ -271,7 +284,9 @@ export interface ConcreteLavaTagClose
   name: string;
 }
 
-export type ConcreteLavaTag = ConcreteLavaTagNamed | ConcreteLavaTagBaseCase;
+export type ConcreteLavaTag =
+  | ConcreteLavaTagNamed
+  | ConcreteLavaTagBaseCase;
 export type ConcreteLavaTagNamed =
   | ConcreteLavaTagAssign
   | ConcreteLavaTagCycle
@@ -284,6 +299,7 @@ export type ConcreteLavaTagNamed =
   | ConcreteLavaTagLava
   | ConcreteLavaTagRender
   | ConcreteLavaTagSection
+  | ConcreteLavaTagSections
   | ConcreteLavaTagWhen;
 
 export interface ConcreteLavaTagNode<Name, Markup>
@@ -308,11 +324,16 @@ export interface ConcreteLavaTagDecrement
   > {}
 export interface ConcreteLavaTagSection
   extends ConcreteLavaTagNode<NamedTags.section, ConcreteStringLiteral> {}
+export interface ConcreteLavaTagSections
+  extends ConcreteLavaTagNode<NamedTags.sections, ConcreteStringLiteral> {}
 export interface ConcreteLavaTagLayout
   extends ConcreteLavaTagNode<NamedTags.layout, ConcreteLavaExpression> {}
 
 export interface ConcreteLavaTagLava
-  extends ConcreteLavaTagNode<NamedTags.lava, ConcreteLavaLavaTagNode[]> {}
+  extends ConcreteLavaTagNode<
+    NamedTags.lava,
+    ConcreteLavaLavaTagNode[]
+  > {}
 export type ConcreteLavaLavaTagNode =
   | ConcreteLavaTagOpen
   | ConcreteLavaTagClose
@@ -320,7 +341,10 @@ export type ConcreteLavaLavaTagNode =
   | ConcreteLavaRawTag;
 
 export interface ConcreteLavaTagAssign
-  extends ConcreteLavaTagNode<NamedTags.assign, ConcreteLavaTagAssignMarkup> {}
+  extends ConcreteLavaTagNode<
+    NamedTags.assign,
+    ConcreteLavaTagAssignMarkup
+  > {}
 export interface ConcreteLavaTagAssignMarkup
   extends ConcreteBasicNode<ConcreteNodeTypes.AssignMarkup> {
   name: string;
@@ -328,7 +352,10 @@ export interface ConcreteLavaTagAssignMarkup
 }
 
 export interface ConcreteLavaTagCycle
-  extends ConcreteLavaTagNode<NamedTags.cycle, ConcreteLavaTagCycleMarkup> {}
+  extends ConcreteLavaTagNode<
+    NamedTags.cycle,
+    ConcreteLavaTagCycleMarkup
+  > {}
 export interface ConcreteLavaTagCycleMarkup
   extends ConcreteBasicNode<ConcreteNodeTypes.CycleMarkup> {
   groupName: ConcreteLavaExpression | null;
@@ -336,9 +363,15 @@ export interface ConcreteLavaTagCycleMarkup
 }
 
 export interface ConcreteLavaTagRender
-  extends ConcreteLavaTagNode<NamedTags.render, ConcreteLavaTagRenderMarkup> {}
+  extends ConcreteLavaTagNode<
+    NamedTags.render,
+    ConcreteLavaTagRenderMarkup
+  > {}
 export interface ConcreteLavaTagInclude
-  extends ConcreteLavaTagNode<NamedTags.include, ConcreteLavaTagRenderMarkup> {}
+  extends ConcreteLavaTagNode<
+    NamedTags.include,
+    ConcreteLavaTagRenderMarkup
+  > {}
 
 export interface ConcreteLavaTagRenderMarkup
   extends ConcreteBasicNode<ConcreteNodeTypes.RenderMarkup> {
@@ -444,7 +477,14 @@ export type LavaHtmlConcreteNode =
   | ConcreteTextNode
   | ConcreteYamlFrontmatterNode;
 
+export type LavaConcreteNode =
+  | ConcreteLavaNode
+  | ConcreteTextNode
+  | ConcreteYamlFrontmatterNode;
+
 export type LavaHtmlCST = LavaHtmlConcreteNode[];
+
+export type LavaCST = LavaConcreteNode[];
 
 interface Mapping {
   [k: string]: number | TemplateMapping | TopLevelFunctionMapping;
@@ -466,6 +506,22 @@ const markupTrimEnd = (i: number) => (tokens: Node[]) =>
   tokens[i].sourceString.trimEnd();
 
 export function toLavaHtmlCST(source: string): LavaHtmlCST {
+  return toCST(source, lavaHtmlGrammar, [
+    'HelperMappings',
+    'LavaMappings',
+    'LavaHTMLMappings',
+  ]);
+}
+
+export function toLavaCST(source: string): LavaCST {
+  return toCST(source, lavaGrammar, ['HelperMappings', 'LavaMappings']);
+}
+
+function toCST<T>(
+  source: string,
+  cstGrammar: ohm.Grammar,
+  cstMappings: ('HelperMappings' | 'LavaMappings' | 'LavaHTMLMappings')[],
+): T {
   // When we switch parser, our locStart and locEnd functions must account
   // for the offset of the {% lava %} markup
   let lavaStatementOffset = 0;
@@ -486,7 +542,7 @@ export function toLavaHtmlCST(source: string): LavaHtmlCST {
     source,
   };
 
-  const res = lavaHtmlGrammar.match(source, 'Node');
+  const res = cstGrammar.match(source, 'Node');
   if (res.failed()) {
     throw new LavaHTMLCSTParsingError(res);
   }
@@ -659,6 +715,7 @@ export function toLavaHtmlCST(source: string): LavaHtmlCST {
     lavaTagRender: 0,
     lavaTagInclude: 0,
     lavaTagSection: 0,
+    lavaTagSections: 0,
     lavaTagLayout: 0,
     lavaTagRule: {
       type: ConcreteNodeTypes.LavaTag,
@@ -703,6 +760,7 @@ export function toLavaHtmlCST(source: string): LavaHtmlCST {
 
     lavaTagEchoMarkup: 0,
     lavaTagSectionMarkup: 0,
+    lavaTagSectionsMarkup: 0,
     lavaTagLayoutMarkup: 0,
     lavaTagAssignMarkup: {
       type: ConcreteNodeTypes.AssignMarkup,
@@ -1025,16 +1083,20 @@ export function toLavaHtmlCST(source: string): LavaHtmlCST {
 
     HtmlRawTagImpl: {
       type: ConcreteNodeTypes.HtmlRawTag,
-      name: 1,
-      attrList: 2,
-      body: 4,
+      name: (tokens: Node[]) => tokens[0].children[1].sourceString,
+      attrList(tokens: Node[]) {
+        const mappings = (this as any).args.mapping;
+        return tokens[0].children[2].toAST(mappings);
+      },
+      body: (tokens: Node[]) =>
+        source.slice(tokens[0].source.endIdx, tokens[2].source.startIdx),
       locStart,
       locEnd,
       source,
       blockStartLocStart: (tokens: any) => tokens[0].source.startIdx,
-      blockStartLocEnd: (tokens: any) => tokens[3].source.endIdx,
-      blockEndLocStart: (tokens: any) => tokens[5].source.startIdx,
-      blockEndLocEnd: (tokens: any) => tokens[5].source.endIdx,
+      blockStartLocEnd: (tokens: any) => tokens[0].source.endIdx,
+      blockEndLocStart: (tokens: any) => tokens[2].source.startIdx,
+      blockEndLocEnd: (tokens: any) => tokens[2].source.endIdx,
     },
 
     HtmlVoidElement: {
@@ -1128,11 +1190,19 @@ export function toLavaHtmlCST(source: string): LavaHtmlCST {
     attrUnquotedTextNode: textNode,
   };
 
-  const ohmAST = toAST(res, {
-    ...HelperMappings,
-    ...LavaMappings,
-    ...LavaHTMLMappings,
-  });
+  const defaultMappings = {
+    HelperMappings,
+    LavaMappings,
+    LavaHTMLMappings,
+  };
 
-  return ohmAST as LavaHtmlCST;
+  const selectedMappings = cstMappings.reduce(
+    (mappings, key) => ({
+      ...mappings,
+      ...defaultMappings[key],
+    }),
+    {},
+  );
+
+  return toAST(res, selectedMappings) as T;
 }

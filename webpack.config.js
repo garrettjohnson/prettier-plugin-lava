@@ -22,14 +22,6 @@ module.exports = {
       root: 'prettier',
     },
   },
-  resolve: {
-    alias: {
-      '../../grammar/lava-html.ohm.js': path.resolve(
-        __dirname,
-        'build/shims/lava-html-ohm.js',
-      ),
-    },
-  },
   optimization: {
     minimize: PRODUCTION ? true : false,
   },

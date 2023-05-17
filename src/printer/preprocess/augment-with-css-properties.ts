@@ -93,7 +93,9 @@ function getCssDisplay(
         case 'ignore':
           return 'block';
         default: {
-          return CSS_DISPLAY_LAVA_TAGS[node.name] || CSS_DISPLAY_LAVA_DEFAULT;
+          return (
+            CSS_DISPLAY_LAVA_TAGS[node.name] || CSS_DISPLAY_LAVA_DEFAULT
+          );
         }
       }
 

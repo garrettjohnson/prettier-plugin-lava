@@ -37,7 +37,7 @@ const options: SupportOptions = {
   singleLineLinkTags: {
     type: 'boolean',
     category: 'HTML',
-    default: true,
+    default: false,
     description: 'Always print link tags on a single line to remove clutter',
     since: '0.1.0',
   },
@@ -51,8 +51,7 @@ const options: SupportOptions = {
 };
 
 const defaultOptions: Partial<RequiredOptions> = {
-  printWidth: 600,
-  tabWidth: 4,
+  printWidth: 120,
 };
 
 const plugin: Plugin<LavaHtmlNode> = {

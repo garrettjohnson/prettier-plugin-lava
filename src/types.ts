@@ -62,7 +62,7 @@ export enum NamedTags {
   cycle = 'cycle',
   decrement = 'decrement',
   echo = 'echo',
-  elseif = 'elseif',
+  elsif = 'elsif',
   for = 'for',
   form = 'form',
   if = 'if',
@@ -73,6 +73,7 @@ export enum NamedTags {
   paginate = 'paginate',
   render = 'render',
   section = 'section',
+  sections = 'sections',
   tablerow = 'tablerow',
   unless = 'unless',
   when = 'when',
@@ -237,7 +238,10 @@ export type LavaRawTag = Augmented<AST.LavaRawTag, AllAugmentations>;
 export type LavaTag = Augmented<AST.LavaTag, AllAugmentations>;
 export type LavaTagNamed = Augmented<AST.LavaTagNamed, AllAugmentations>;
 export type LavaBranch = Augmented<AST.LavaBranch, AllAugmentations>;
-export type LavaBranchNamed = Augmented<AST.LavaBranchNamed, AllAugmentations>;
+export type LavaBranchNamed = Augmented<
+  AST.LavaBranchNamed,
+  AllAugmentations
+>;
 export type LavaDrop = Augmented<AST.LavaDrop, AllAugmentations>;
 export type HtmlNode = Augmented<AST.HtmlNode, AllAugmentations>;
 export type HtmlTag = Exclude<HtmlNode, HtmlComment>;
@@ -261,5 +265,8 @@ export type AttrDoubleQuoted = Augmented<
 >;
 export type AttrUnquoted = Augmented<AST.AttrUnquoted, AllAugmentations>;
 export type AttrEmpty = Augmented<AST.AttrEmpty, AllAugmentations>;
-export type LavaExpression = Augmented<AST.LavaExpression, AllAugmentations>;
+export type LavaExpression = Augmented<
+  AST.LavaExpression,
+  AllAugmentations
+>;
 export type TextNode = Augmented<AST.TextNode, AllAugmentations>;

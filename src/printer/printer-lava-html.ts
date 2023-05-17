@@ -270,7 +270,12 @@ function printNode(
     }
 
     case NodeTypes.LavaRawTag: {
-      return printLavaRawTag(path as AstPath<LavaRawTag>, options, print, args);
+      return printLavaRawTag(
+        path as AstPath<LavaRawTag>,
+        options,
+        print,
+        args,
+      );
     }
 
     case NodeTypes.LavaTag: {
@@ -278,7 +283,12 @@ function printNode(
     }
 
     case NodeTypes.LavaBranch: {
-      return printLavaBranch(path as AstPath<LavaBranch>, options, print, args);
+      return printLavaBranch(
+        path as AstPath<LavaBranch>,
+        options,
+        print,
+        args,
+      );
     }
 
     case NodeTypes.AttrEmpty: {
@@ -466,8 +476,10 @@ function printNode(
 
         if (shouldPrintFirstArgumentSameLine) {
           const [firstDoc, ...rest] = printed;
-          const restDoc = isEmpty(rest) ? '' : indent([',', join([','], rest)]);
-          args = [':', firstDoc, restDoc];
+          const restDoc = isEmpty(rest)
+            ? ''
+            : indent([',', line, join([',', line], rest)]);
+          args = [': ', firstDoc, restDoc];
         } else {
           args = [':', indent([line, join([',', line], printed)])];
         }
@@ -477,7 +489,7 @@ function printNode(
     }
 
     case NodeTypes.NamedArgument: {
-      return [node.name, ':', path.call(print, 'value')];
+      return [node.name, ': ', path.call(print, 'value')];
     }
 
     case NodeTypes.TextNode: {

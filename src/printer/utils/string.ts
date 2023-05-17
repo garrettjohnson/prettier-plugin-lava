@@ -1,4 +1,9 @@
-import { LavaAstPath, LavaHtmlNode, LavaParserOptions } from '~/types';
+import {
+  LavaAstPath,
+  LavaHtmlNode,
+  LavaParserOptions,
+  Position,
+} from '~/types';
 
 export function isWhitespace(source: string, loc: number): boolean {
   if (loc < 0 || loc >= source.length) return false;
@@ -48,4 +53,15 @@ export function hasLineBreakInRange(
 ): boolean {
   const indexOfNewLine = source.indexOf('\n', locStart);
   return 0 <= indexOfNewLine && indexOfNewLine < locEnd;
+}
+
+export function hasMoreThanOneNewLineBetweenNodes(
+  source: string,
+  prev: { position: Position } | undefined,
+  next: { position: Position } | undefined,
+): boolean {
+  if (!prev || !next) return false;
+  const between = source.slice(prev.position.end, next.position.start);
+  const count = between.match(/\n/g)?.length || 0;
+  return count > 1;
 }
