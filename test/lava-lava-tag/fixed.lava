@@ -115,7 +115,6 @@ printWidth: 1
 
   increment i
   section 'string'
-  layout 'string'
 
   paginate col by 10, window_size: 50
     render 'icon' with x as bar, foo: bar

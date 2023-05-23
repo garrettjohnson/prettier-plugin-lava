@@ -1,9 +1,9 @@
 It should never break a name
 printWidth: 1
-{% layout  "layoutName"  %}
-{% layout "layoutName" %}
-{%layout "layoutName"%}
-{%- layout
+{% include  "layoutName"  %}
+{% include "layoutName" %}
+{%include "layoutName"%}
+{%- include
 "layoutName"
 -%}
-{%- layout none -%}
+{%- include none -%}

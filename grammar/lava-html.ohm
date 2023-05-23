@@ -257,10 +257,13 @@ Lava <: Helpers {
 
   blockName =
     (
+    // Shopify Tests
+    "form"
+    | "paginate"
     // Rock blocks
-    "achievementattempt"
-    | "achievementtype"
+    | "achievementattempt"
     | "achievementtypeprerequisite"
+    | "achievementtype"
     | "analyticsdimcampus"
     | "analyticsdimfamilycurrent"
     | "analyticsdimfamilyheadofhousehold"
