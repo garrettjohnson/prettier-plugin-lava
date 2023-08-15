@@ -9,17 +9,11 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/prettier-plugin-lava"><img src="https://img.shields.io/npm/v/prettier-plugin-lava.svg?sanitize=true" alt="Version"></a>
   <a href="https://github.com/Garrettjohnson/prettier-plugin-lava/blob/main/LICENSE.md"><img src="https://img.shields.io/npm/l/@garrettjohnson/prettier-plugin-lava.svg?sanitize=true" alt="License"></a>
-  <a href="https://github.com/Garrettjohnson/prettier-plugin-lava-prototype/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Garrettjohnson/prettier-plugin-lava-prototype/actions/workflows/ci.yml/badge.svg"></a>
-  <!--
+  <a href="https://github.com/Garrettjohnson/prettier-plugin-lava/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/Garrettjohnson/prettier-plugin-lava/actions/workflows/ci.yml/badge.svg"></a>
     <a href="https://npmcharts.com/compare/prettier-plugin-lava?minimal=true"><img src="https://img.shields.io/npm/dm/prettier-plugin-lava.svg?sanitize=true" alt="Downloads"></a>
-  -->
 </p>
 
-<!-- <div align="center">
 
-🗣 [Slack](https://join.slack.com/t/shopifypartners/shared_invite/zt-sdr2quab-mGkzkttZ2hnVm0~8noSyvw) | 💬 [Discussions](https://github.com/Garrettjohnson/prettier-plugin-lava/discussions) | 📝 [Changelog](./CHANGELOG.md)
-
-</div> -->
 
 [Prettier](https://prettier.io) is an opinionated code formatter. It enforces a consistent style by parsing your code and re-printing it with its own rules that take the maximum line length into account, wrapping code when necessary.
 
@@ -35,10 +29,10 @@ Not yet.
 
 ```bash
 # with npm
-npm install --save-dev prettier @garrettjohnson/prettier-plugin-lava
+npm install --save-dev prettier prettier-plugin-lava
 
 # with yarn
-yarn add --dev prettier @garrettjohnson/prettier-plugin-lava
+yarn add --dev prettier prettier-plugin-lava
 ```
 
 ## Usage
