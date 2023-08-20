@@ -49,7 +49,7 @@ const options: SupportOptions = {
 
 const defaultOptions = {
   printWidth: 600,
-  tabWidth: 4
+  tabWidth: 4,
 };
 
 const plugin2: Plugin2<LavaHtmlNode> = {

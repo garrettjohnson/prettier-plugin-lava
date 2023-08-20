@@ -293,12 +293,7 @@ function printNode(
     }
 
     case NodeTypes.LavaRawTag: {
-      return printLavaRawTag(
-        path as AstPath<LavaRawTag>,
-        options,
-        print,
-        args,
-      );
+      return printLavaRawTag(path as AstPath<LavaRawTag>, options, print, args);
     }
 
     case NodeTypes.LavaTag: {
@@ -306,12 +301,7 @@ function printNode(
     }
 
     case NodeTypes.LavaBranch: {
-      return printLavaBranch(
-        path as AstPath<LavaBranch>,
-        options,
-        print,
-        args,
-      );
+      return printLavaBranch(path as AstPath<LavaBranch>, options, print, args);
     }
 
     case NodeTypes.AttrEmpty: {

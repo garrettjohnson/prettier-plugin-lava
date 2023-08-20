@@ -77,10 +77,7 @@ export function printClosingTagEnd(
       ];
 }
 
-function printClosingTagPrefix(
-  node: LavaHtmlNode,
-  options: LavaParserOptions,
-) {
+function printClosingTagPrefix(node: LavaHtmlNode, options: LavaParserOptions) {
   return needsToBorrowLastChildClosingTagEndMarker(node)
     ? printClosingTagEndMarker(node.lastChild, options)
     : '';
@@ -176,9 +173,7 @@ export function needsToBorrowPrevClosingTagEndMarker(node: LavaHtmlNode) {
   );
 }
 
-export function needsToBorrowLastChildClosingTagEndMarker(
-  node: LavaHtmlNode,
-) {
+export function needsToBorrowLastChildClosingTagEndMarker(node: LavaHtmlNode) {
   /**
    *     <p
    *       ><a></a

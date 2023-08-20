@@ -20,34 +20,34 @@ printWidth: 1
 It should break on alias + args
 printWidth: 1
 {% render 'foo/bar' as bar,
-  key1: val1,
-  key2: (0..1)
+  key1:val1,
+  key2:(0..1)
 %}
 
 It should break on variable + args (after variable)
 printWidth: 1
 {% render 'foo/bar' with 'string',
-  key1: val1,
-  key2: (0..1)
+  key1:val1,
+  key2:(0..1)
 %}
 
 It should break on variable + alias + args (before variable)
 printWidth: 1
 {% render 'foo/bar'
   with 'string' as bar,
-  key1: val1,
-  key2: (0..1)
+  key1:val1,
+  key2:(0..1)
 %}
 
 It should break on named args
 printWidth: 1
 {% render 'foo/bar',
-  key1: val1,
-  key2: (0..1)
+  key1:val1,
+  key2:(0..1)
 %}
 
 It should not require commas (as per syntax) but add them when pretty printed
-{% render 'foo/bar', key1: val1, key2: (0..1) %}
+{% render 'foo/bar', key1:val1, key2:(0..1) %}
 
 It should not require spaces (as per syntax) but add them when pretty printed
-{% render 'foo/bar', key1: val1, key2: (0..1) %}
+{% render 'foo/bar', key1:val1, key2:(0..1) %}

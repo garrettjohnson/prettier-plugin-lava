@@ -255,8 +255,8 @@ function isTrailingWhitespaceSensitiveNode(node: AugmentedAstNode): boolean {
     const isLastChildTrailingSensitive =
       !!node.lastChild && isTrailingWhitespaceSensitiveNode(node.lastChild);
 
-    // {% if %}{% elsif cond %}<emptythis>{% endif %}
-    // {% if %}{% elsif cond %}this{% endif %}
+    // {% if %}{% elseif cond %}<emptythis>{% endif %}
+    // {% if %}{% elseif cond %}this{% endif %}
     // {% if %}{% else %}<emptythis>{% endif %}
     // {% if %}{% else %}this{% endif %}
     if (isLastBranch) {
@@ -270,10 +270,10 @@ function isTrailingWhitespaceSensitiveNode(node: AugmentedAstNode): boolean {
 
     // {% if %}<emptythis>{% endif %}
     // {% if %}<emptythis>{% else %}{% endif %}
-    // {% if %}{% elsif cond %}<emptythis>{% else %}{% endif %}
+    // {% if %}{% elseif cond %}<emptythis>{% else %}{% endif %}
     // {% if %}this{% endif %}
     // {% if %}this{% else %}{% endif %}
-    // {% if %}{% elsif cond %}this{% else %}{% endif %}
+    // {% if %}{% elseif cond %}this{% else %}{% endif %}
     return hasNoLastChild || isLastChildTrailingSensitive;
   }
 

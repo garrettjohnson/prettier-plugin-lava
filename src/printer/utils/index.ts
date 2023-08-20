@@ -19,9 +19,7 @@ export function isDeeplyNested(
 ): boolean {
   if (!node.children) return false;
   if (isBranchedTag(node)) {
-    return !!node.children.find((child) =>
-      isDeeplyNested(child as LavaBranch),
-    );
+    return !!node.children.find((child) => isDeeplyNested(child as LavaBranch));
   }
   return !!node.children.find(
     (child) => !isEmpty((child as any).children || []),

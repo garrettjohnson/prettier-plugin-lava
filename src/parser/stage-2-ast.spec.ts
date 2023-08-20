@@ -605,7 +605,7 @@ describe('Unit: Stage 2 (AST)', () => {
       });
 
       it(`${title} - should parse lava ifs as branches`, () => {
-        ast = toAST(`{% if A %}A{% elsif B %}B{% else %}C{% endif %}`);
+        ast = toAST(`{% if A %}A{% elseif B %}B{% else %}C{% endif %}`);
         expectPath(ast, 'children.0').to.exist;
         expectPath(ast, 'children.0.type').to.eql('LavaTag');
         expectPath(ast, 'children.0.name').to.eql('if');
@@ -617,7 +617,7 @@ describe('Unit: Stage 2 (AST)', () => {
         expectPath(ast, 'children.0.children.0.children.0.value').to.eql('A');
 
         expectPath(ast, 'children.0.children.1.type').to.eql('LavaBranch');
-        expectPath(ast, 'children.0.children.1.name').to.eql('elsif');
+        expectPath(ast, 'children.0.children.1.name').to.eql('elseif');
         expectPath(ast, 'children.0.children.1.markup.type').to.eql('VariableLookup');
         expectPath(ast, 'children.0.children.1.children.0.type').to.eql('TextNode');
         expectPath(ast, 'children.0.children.1.children.0.value').to.eql('B');
@@ -733,10 +733,10 @@ describe('Unit: Stage 2 (AST)', () => {
         '{% if cond %}<div>{% endif %}',
         '{% if cond %}{% else %}<div>{% endif %}',
         '{% if cond %}<div>{% else %}{% endif %}',
-        '{% if cond %}{% elsif cond %}<div>{% endif %}',
+        '{% if cond %}{% elseif cond %}<div>{% endif %}',
         '{% if cond %}<div><a>{% endif %}',
         '{% if cond %}{% else %}<div><a>{% endif %}',
-        '{% if cond %}{% elsif cond %}<div><a>{% endif %}',
+        '{% if cond %}{% elseif cond %}<div><a>{% endif %}',
         '{% case cond %}{% when %}<div><a>{% endcase %}',
       ];
       for (const testCase of testCases) {
@@ -747,7 +747,7 @@ describe('Unit: Stage 2 (AST)', () => {
       testCases = [
         '{% if cond %}<a><b><c>{% endif %}',
         '{% if cond %}{% else %}<a><b><c>{% endif %}',
-        '{% if cond %}{% elsif cond %}<a><b><c>{% endif %}',
+        '{% if cond %}{% elseif cond %}<a><b><c>{% endif %}',
         '{% case cond %}{% when %}<a><b><c>{% endcase %}',
       ];
       for (const testCase of testCases) {
@@ -762,8 +762,8 @@ describe('Unit: Stage 2 (AST)', () => {
         '{% if cond %}<b><a>hi</a>{% endif %}',
         '{% if cond %}{% else %}<a>hi</a><b>{% endif %}',
         '{% if cond %}{% else %}<b><a>hi</a>{% endif %}',
-        '{% if cond %}{% elsif cond %}<a>hi</a><b>{% endif %}',
-        '{% if cond %}{% elsif cond %}<b><a>hi</a>{% endif %}',
+        '{% if cond %}{% elseif cond %}<a>hi</a><b>{% endif %}',
+        '{% if cond %}{% elseif cond %}<b><a>hi</a>{% endif %}',
         '{% case cond %}{% when %}<a>hi</a><b>{% endcase %}',
       ];
       for (const testCase of testCases) {

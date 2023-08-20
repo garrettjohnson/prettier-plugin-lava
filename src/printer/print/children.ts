@@ -153,10 +153,7 @@ function printBetweenLine(
   return nextNode.hasLeadingWhitespace ? line : softline;
 }
 
-export type HasChildren = Extract<
-  LavaHtmlNode,
-  { children?: LavaHtmlNode[] }
->;
+export type HasChildren = Extract<LavaHtmlNode, { children?: LavaHtmlNode[] }>;
 
 type Whitespace =
   | doc.builders.Line

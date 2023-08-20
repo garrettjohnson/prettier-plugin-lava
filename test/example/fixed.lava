@@ -2,7 +2,7 @@
   Hey buddy, how are you doing today?
   Excited about Lava?
 {%- endcomment %}
-{{ product | image_tag: preload: true }}
+{{ product | image_tag: preload:true }}
 {% assign x = 1 %}
 
 {% for product in products %}
@@ -11,7 +11,7 @@
     class="container"
     style="width: 100%; padding-top: 100%"
   >
-    {{ product | image_tag: preload: true }}
+    {{ product | image_tag: preload:true }}
 
     {% assign img = product.featured_image %}
     <div>Look! Void elements don't screw up your indentation!</div>

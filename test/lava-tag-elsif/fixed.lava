@@ -1,22 +1,22 @@
 It should not break singular expressions, but we break children
 printWidth: 1
 {% if false %}
-{% elsif x %}
+{% elseif x %}
   hello
 {% endif %}
 {% if false %}
-{% elsif 'string' %}
+{% elseif 'string' %}
   hello
 {% endif %}
 {% if false %}
-{% elsif null %}
+{% elseif null %}
   hello
 {% endif %}
 
 It should break before logical operators
 printWidth: 1
 {% if false %}
-{% elsif conditionA
+{% elseif conditionA
   and var.key
   and true
 %}
@@ -26,7 +26,7 @@ printWidth: 1
 It should break before comparators (and indent)
 printWidth: 1
 {% if false %}
-{% elsif lower
+{% elseif lower
     < some.variable
   and some.variable
     < upper
@@ -35,18 +35,18 @@ printWidth: 1
 {% endif %}
 
 It should try to keep comparators on same line
-printWidth: 30
+printWidth: 32
 {% if false %}
-{% elsif lower < some.variable
+{% elseif lower < some.variable
   and some.variable < upper
 %}
   hello
 {% endif %}
 
 It should support all kinds of shit
-printWidth: 30
+printWidth: 32
 {% if false %}
-{% elsif lower < some.variable
+{% elseif lower < some.variable
   and some.variable < upper
   and string contains 'hi'
   or string == empty
@@ -57,9 +57,9 @@ printWidth: 30
 {% endif %}
 
 It should support all kinds of shit (same but for unless)
-printWidth: 30
+printWidth: 32
 {% unless false %}
-{% elsif lower < some.variable
+{% elseif lower < some.variable
   and some.variable < upper
   and string contains 'hi'
   or string == empty

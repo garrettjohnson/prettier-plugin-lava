@@ -204,8 +204,7 @@ export type LavaTagNamed =
   | LavaTagTablerow
   | LavaTagUnless;
 
-export interface LavaTagNode<Name, Markup>
-  extends ASTNode<NodeTypes.LavaTag> {
+export interface LavaTagNode<Name, Markup> extends ASTNode<NodeTypes.LavaTag> {
   /**
    * e.g. if, ifchanged, for, etc.
    */
@@ -270,10 +269,9 @@ export interface LavaTagTablerow
   extends LavaTagNode<NamedTags.tablerow, ForMarkup> {}
 
 export interface LavaTagIf extends LavaTagConditional<NamedTags.if> {}
-export interface LavaTagUnless
-  extends LavaTagConditional<NamedTags.unless> {}
-export interface LavaBranchElsif
-  extends LavaBranchNode<NamedTags.elsif, LavaConditionalExpression> {}
+export interface LavaTagUnless extends LavaTagConditional<NamedTags.unless> {}
+export interface LavaBranchElseif
+  extends LavaBranchNode<NamedTags.elseif, LavaConditionalExpression> {}
 export interface LavaTagConditional<Name>
   extends LavaTagNode<Name, LavaConditionalExpression> {}
 
@@ -335,12 +333,11 @@ export type LavaBranch =
   | LavaBranchUnnamed
   | LavaBranchBaseCase
   | LavaBranchNamed;
-export type LavaBranchNamed = LavaBranchElsif | LavaBranchWhen;
+export type LavaBranchNamed = LavaBranchElseif | LavaBranchWhen;
 
-interface LavaBranchNode<Name, Markup>
-  extends ASTNode<NodeTypes.LavaBranch> {
+interface LavaBranchNode<Name, Markup> extends ASTNode<NodeTypes.LavaBranch> {
   /**
-   * e.g. else, elsif, when | null when in the main branch
+   * e.g. else, elseif, when | null when in the main branch
    */
   name: Name;
 
@@ -355,8 +352,7 @@ interface LavaBranchNode<Name, Markup>
 }
 
 export interface LavaBranchUnnamed extends LavaBranchNode<null, string> {}
-export interface LavaBranchBaseCase
-  extends LavaBranchNode<string, string> {}
+export interface LavaBranchBaseCase extends LavaBranchNode<string, string> {}
 
 export interface LavaDrop extends ASTNode<NodeTypes.LavaDrop> {
   /**
@@ -561,7 +557,7 @@ function isLavaBranchDisguisedAsTag(
 ): node is LavaTagBaseCase {
   return (
     node.type === NodeTypes.LavaTag &&
-    ['else', 'elsif', 'when'].includes(node.name)
+    ['else', 'elseif', 'when'].includes(node.name)
   );
 }
 
@@ -656,10 +652,7 @@ class ASTBuilder {
   }
 
   push(node: LavaHtmlNode) {
-    if (
-      node.type === NodeTypes.LavaTag &&
-      isLavaBranchDisguisedAsTag(node)
-    ) {
+    if (node.type === NodeTypes.LavaTag && isLavaBranchDisguisedAsTag(node)) {
       this.cursor.pop();
       this.cursor.pop();
       this.open(toNamedLavaBranchBaseCase(node));
@@ -1184,7 +1177,7 @@ function toNamedLavaTag(
       };
     }
 
-    case NamedTags.elsif: {
+    case NamedTags.elseif: {
       return {
         ...lavaBranchBaseAttributes(node),
         name: node.name,
@@ -1223,9 +1216,7 @@ function toNamedLavaTag(
   }
 }
 
-function toNamedLavaBranchBaseCase(
-  node: LavaTagBaseCase,
-): LavaBranchBaseCase {
+function toNamedLavaBranchBaseCase(node: LavaTagBaseCase): LavaBranchBaseCase {
   return {
     name: node.name,
     type: NodeTypes.LavaBranch,
@@ -1239,9 +1230,7 @@ function toNamedLavaBranchBaseCase(
   };
 }
 
-function toUnnamedLavaBranch(
-  parentNode: LavaHtmlNode,
-): LavaBranchUnnamed {
+function toUnnamedLavaBranch(parentNode: LavaHtmlNode): LavaBranchUnnamed {
   return {
     type: NodeTypes.LavaBranch,
     name: null,
@@ -1304,9 +1293,7 @@ function toPaginateMarkup(node: ConcretePaginateMarkup): PaginateMarkup {
   };
 }
 
-function toRawMarkup(
-  node: ConcreteHtmlRawTag | ConcreteLavaRawTag,
-): RawMarkup {
+function toRawMarkup(node: ConcreteHtmlRawTag | ConcreteLavaRawTag): RawMarkup {
   return {
     type: NodeTypes.RawMarkup,
     kind: toRawMarkupKind(node),
@@ -1387,9 +1374,7 @@ function toRawMarkupKindFromHtmlNode(node: ConcreteHtmlRawTag): RawMarkupKinds {
   }
 }
 
-function toRawMarkupKindFromLavaNode(
-  node: ConcreteLavaRawTag,
-): RawMarkupKinds {
+function toRawMarkupKindFromLavaNode(node: ConcreteLavaRawTag): RawMarkupKinds {
   switch (node.name) {
     case 'javascript':
       return RawMarkupKinds.javascript;
@@ -1574,9 +1559,7 @@ function toLavaArgument(node: ConcreteLavaArgument): LavaArgument {
   }
 }
 
-function toNamedArgument(
-  node: ConcreteLavaNamedArgument,
-): LavaNamedArgument {
+function toNamedArgument(node: ConcreteLavaNamedArgument): LavaNamedArgument {
   return {
     type: NodeTypes.NamedArgument,
     name: node.name,

@@ -23,7 +23,7 @@ it should break between text and node when the child has linebreaks
   |=============
   {{-
     'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-    | append: 'aaa'
+    | append:'aaa'
   -}}
   =============|
 </p>

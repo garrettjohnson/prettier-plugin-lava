@@ -113,6 +113,7 @@ function getTestSetup(paragraph: string, index: number) {
     .replace(/\.$/, '');
   const prettierOptions: Partial<LavaParserOptions> = {
     printWidth: 80, // We changed the default, but the tests were written with 80 in mind.
+    tabWidth: 2, // Reset to the default from prettier 2
     indentSchema: true, // We changed the default, but the tests were written with true in mind.
     trailingComma: 'es5', // prettier 3 changed the default from "es5" to "all", but our tests were written for prettier 2
   };

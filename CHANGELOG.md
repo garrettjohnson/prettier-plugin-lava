@@ -196,7 +196,7 @@ Astute devs might have noticed that it is also enabled inside [Shopify's Online 
   * Add support for the `assign` tag ([#54](https://github.com/shopify/prettier-plugin-lava/issues/54))
   * Add support for the `echo` lava tag ([#54](https://github.com/shopify/prettier-plugin-lava/issues/54))
   * Add support for the `section` tag ([#73](https://github.com/shopify/prettier-plugin-lava/issues/73))
-  * Add support for the `if`, `elsif` and `unless` tags ([#77](https://github.com/shopify/prettier-plugin-lava/issues/77))
+  * Add support for the `if`, `elseif` and `unless` tags ([#77](https://github.com/shopify/prettier-plugin-lava/issues/77))
   * Add support for the `render` and `include` tags ([#56](https://github.com/shopify/prettier-plugin-lava/issues/56))
   * Add support for the `form` tag ([#75](https://github.com/shopify/prettier-plugin-lava/issues/75))
   * Add support for the `capture` open tag parsing ([#84](https://github.com/shopify/prettier-plugin-lava/issues/84))

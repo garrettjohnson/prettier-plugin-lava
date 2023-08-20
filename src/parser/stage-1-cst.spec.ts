@@ -695,8 +695,8 @@ describe('Unit: Stage 1 (CST)', () => {
           });
         });
 
-        it('should parse the if, unless and elsif tag arguments as a list of conditions', () => {
-          ['if', 'unless', 'elsif'].forEach((tagName) => {
+        it('should parse the if, unless and elseif tag arguments as a list of conditions', () => {
+          ['if', 'unless', 'elseif'].forEach((tagName) => {
             [
               {
                 expression: 'a',
@@ -727,9 +727,7 @@ describe('Unit: Stage 1 (CST)', () => {
               },
             ].forEach(({ expression, conditions }) => {
               cst = toCST(`{% ${tagName} ${expression} -%}`);
-              expectPath(cst, '0.type').to.equal(
-                tagName === 'elsif' ? 'LavaTag' : 'LavaTagOpen',
-              );
+              expectPath(cst, '0.type').to.equal(tagName === 'elseif' ? 'LavaTag' : 'LavaTagOpen');
               expectPath(cst, '0.name').to.equal(tagName);
               expectPath(cst, '0.markup').to.have.lengthOf(conditions.length);
               conditions.forEach(({ relation, conditional }, i) => {

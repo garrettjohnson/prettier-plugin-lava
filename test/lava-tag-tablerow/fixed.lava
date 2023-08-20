@@ -18,8 +18,8 @@ printWidth: 1
 It breaks on tag arguments
 printWidth: 1
 {% tablerow element in collection
-  limit: 10
-  offset: 10
+  limit:10
+  offset:10
 %}
   {{ element }}
 {% endtablerow %}
@@ -28,13 +28,13 @@ It breaks on both reversed and tag argumentsc
 printWidth: 1
 {% tablerow element in collection
   reversed
-  limit: 10
+  limit:10
 %}
   {{ element }}
 {% endtablerow %}
 
 It only breaks if the printWidth is hit
 printWidth: 80
-{% tablerow element in collection reversed limit: 10 %}
+{% tablerow element in collection reversed limit:10 %}
   {{ element }}
 {% endtablerow %}

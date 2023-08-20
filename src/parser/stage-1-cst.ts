@@ -225,12 +225,9 @@ export interface ConcreteLavaTagWhen
 export interface ConcreteLavaTagOpenIf
   extends ConcreteLavaTagOpenNode<NamedTags.if, ConcreteLavaCondition[]> {}
 export interface ConcreteLavaTagOpenUnless
-  extends ConcreteLavaTagOpenNode<
-    NamedTags.unless,
-    ConcreteLavaCondition[]
-  > {}
-export interface ConcreteLavaTagElsif
-  extends ConcreteLavaTagNode<NamedTags.elsif, ConcreteLavaCondition[]> {}
+  extends ConcreteLavaTagOpenNode<NamedTags.unless, ConcreteLavaCondition[]> {}
+export interface ConcreteLavaTagElseif
+  extends ConcreteLavaTagNode<NamedTags.elseif, ConcreteLavaCondition[]> {}
 
 export interface ConcreteLavaCondition
   extends ConcreteBasicNode<ConcreteNodeTypes.Condition> {
@@ -249,10 +246,7 @@ export interface ConcreteLavaTagOpenForm
   extends ConcreteLavaTagOpenNode<NamedTags.form, ConcreteLavaArgument[]> {}
 
 export interface ConcreteLavaTagOpenFor
-  extends ConcreteLavaTagOpenNode<
-    NamedTags.for,
-    ConcreteLavaTagForMarkup
-  > {}
+  extends ConcreteLavaTagOpenNode<NamedTags.for, ConcreteLavaTagForMarkup> {}
 export interface ConcreteLavaTagForMarkup
   extends ConcreteBasicNode<ConcreteNodeTypes.ForMarkup> {
   variableName: string;
@@ -268,10 +262,7 @@ export interface ConcreteLavaTagOpenTablerow
   > {}
 
 export interface ConcreteLavaTagOpenPaginate
-  extends ConcreteLavaTagOpenNode<
-    NamedTags.paginate,
-    ConcretePaginateMarkup
-  > {}
+  extends ConcreteLavaTagOpenNode<NamedTags.paginate, ConcretePaginateMarkup> {}
 
 export interface ConcretePaginateMarkup
   extends ConcreteBasicNode<ConcreteNodeTypes.PaginateMarkup> {
@@ -285,16 +276,14 @@ export interface ConcreteLavaTagClose
   name: string;
 }
 
-export type ConcreteLavaTag =
-  | ConcreteLavaTagNamed
-  | ConcreteLavaTagBaseCase;
+export type ConcreteLavaTag = ConcreteLavaTagNamed | ConcreteLavaTagBaseCase;
 export type ConcreteLavaTagNamed =
   | ConcreteLavaTagAssign
   | ConcreteLavaTagCycle
   | ConcreteLavaTagEcho
   | ConcreteLavaTagIncrement
   | ConcreteLavaTagDecrement
-  | ConcreteLavaTagElsif
+  | ConcreteLavaTagElseif
   | ConcreteLavaTagInclude
   | ConcreteLavaTagLayout
   | ConcreteLavaTagLava
@@ -331,10 +320,7 @@ export interface ConcreteLavaTagLayout
   extends ConcreteLavaTagNode<NamedTags.layout, ConcreteLavaExpression> {}
 
 export interface ConcreteLavaTagLava
-  extends ConcreteLavaTagNode<
-    NamedTags.lava,
-    ConcreteLavaLavaTagNode[]
-  > {}
+  extends ConcreteLavaTagNode<NamedTags.lava, ConcreteLavaLavaTagNode[]> {}
 export type ConcreteLavaLavaTagNode =
   | ConcreteLavaTagOpen
   | ConcreteLavaTagClose
@@ -342,10 +328,7 @@ export type ConcreteLavaLavaTagNode =
   | ConcreteLavaRawTag;
 
 export interface ConcreteLavaTagAssign
-  extends ConcreteLavaTagNode<
-    NamedTags.assign,
-    ConcreteLavaTagAssignMarkup
-  > {}
+  extends ConcreteLavaTagNode<NamedTags.assign, ConcreteLavaTagAssignMarkup> {}
 export interface ConcreteLavaTagAssignMarkup
   extends ConcreteBasicNode<ConcreteNodeTypes.AssignMarkup> {
   name: string;
@@ -353,10 +336,7 @@ export interface ConcreteLavaTagAssignMarkup
 }
 
 export interface ConcreteLavaTagCycle
-  extends ConcreteLavaTagNode<
-    NamedTags.cycle,
-    ConcreteLavaTagCycleMarkup
-  > {}
+  extends ConcreteLavaTagNode<NamedTags.cycle, ConcreteLavaTagCycleMarkup> {}
 export interface ConcreteLavaTagCycleMarkup
   extends ConcreteBasicNode<ConcreteNodeTypes.CycleMarkup> {
   groupName: ConcreteLavaExpression | null;
@@ -364,15 +344,9 @@ export interface ConcreteLavaTagCycleMarkup
 }
 
 export interface ConcreteLavaTagRender
-  extends ConcreteLavaTagNode<
-    NamedTags.render,
-    ConcreteLavaTagRenderMarkup
-  > {}
+  extends ConcreteLavaTagNode<NamedTags.render, ConcreteLavaTagRenderMarkup> {}
 export interface ConcreteLavaTagInclude
-  extends ConcreteLavaTagNode<
-    NamedTags.include,
-    ConcreteLavaTagRenderMarkup
-  > {}
+  extends ConcreteLavaTagNode<NamedTags.include, ConcreteLavaTagRenderMarkup> {}
 
 export interface ConcreteLavaTagRenderMarkup
   extends ConcreteBasicNode<ConcreteNodeTypes.RenderMarkup> {
@@ -707,7 +681,7 @@ function toCST<T>(
     lavaTagWhenMarkup: 0,
     lavaTagOpenIf: 0,
     lavaTagOpenUnless: 0,
-    lavaTagElsif: 0,
+    lavaTagElseif: 0,
     lavaTagElse: 0,
     lavaTagOpenConditionalMarkup: 0,
     condition: {

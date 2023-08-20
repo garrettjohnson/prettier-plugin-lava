@@ -2,7 +2,7 @@
   Hey buddy, how are you doing today?
   Excited about Lava?
 {%- endcomment %}
-{{ product | image_tag: preload: true }}
+{{ product | image_tag: preload:true }}
 {% assign x = 1 %}
 
 {% for product in products %}
@@ -11,5 +11,5 @@
     Excited about Lava?
   {%- endcomment %}
 
-  {{ product | image_tag: preload: true }}
+  {{ product | image_tag: preload:true }}
 {% endfor %}

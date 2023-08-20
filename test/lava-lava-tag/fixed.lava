@@ -103,7 +103,7 @@ printWidth: 1
   endcapture
   cycle 'one', 'two', 'three'
 
-  for x in col reversed limit: 10
+  for x in col reversed limit:10
     echo x
   else
     echo 'nope'
@@ -116,8 +116,8 @@ printWidth: 1
   increment i
   section 'string'
 
-  paginate col by 10, window_size: 50
-    render 'icon' with x as bar, foo: bar
+  paginate col by 10, window_size:50
+    render 'icon' with x as bar, foo:bar
   endpaginate
 %}
 

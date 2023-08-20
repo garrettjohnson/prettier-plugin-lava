@@ -53,7 +53,7 @@ Lava <: Helpers {
     | lavaTagDecrement
     | lavaTagEcho
     | lavaTagElse
-    | lavaTagElsif
+    | lavaTagElseif
     | lavaTagInclude
     | lavaTagIncrement
     | lavaTagLayout
@@ -156,7 +156,7 @@ Lava <: Helpers {
 
   lavaTagOpenIf = lavaTagOpenRule<"if", lavaTagOpenConditionalMarkup>
   lavaTagOpenUnless = lavaTagOpenRule<"unless", lavaTagOpenConditionalMarkup>
-  lavaTagElsif = lavaTagRule<"elsif", lavaTagOpenConditionalMarkup>
+  lavaTagElseif = lavaTagRule<"elseif", lavaTagOpenConditionalMarkup>
 
   lavaTagBreak = lavaTagRule<"break", empty>
   lavaTagContinue = lavaTagRule<"continue", empty>
