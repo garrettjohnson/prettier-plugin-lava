@@ -1,28 +1,33 @@
-import { Printer, AstPath, Doc, doc } from 'prettier';
+import { doc, Doc } from 'prettier';
+import type { Printer as Printer2 } from 'prettier';
+import type { Printer as Printer3 } from 'prettier3';
 import {
-  LavaHtmlNode,
-  LavaExpression,
-  LavaTag,
+  AttrDoubleQuoted,
+  AttrEmpty,
+  AttrSingleQuoted,
+  AttrUnquoted,
+  DocumentNode,
+  HtmlDanglingMarkerClose,
+  HtmlDanglingMarkerOpen,
+  HtmlElement,
+  HtmlRawNode,
+  HtmlSelfClosingElement,
+  HtmlVoidElement,
+  LavaAstPath,
   LavaBranch,
   LavaDrop,
-  TextNode,
-  HtmlElement,
-  HtmlVoidElement,
-  HtmlSelfClosingElement,
-  HtmlRawNode,
-  AttrUnquoted,
-  AttrSingleQuoted,
-  AttrDoubleQuoted,
-  LavaAstPath,
+  LavaExpression,
+  LavaHtmlNode,
   LavaParserOptions,
   LavaPrinter,
+  LavaPrinterArgs,
+  LavaRawTag,
+  LavaTag,
   NodeTypes,
   Position,
-  LavaPrinterArgs,
-  DocumentNode,
-  LavaRawTag,
-  AttrEmpty,
+  TextNode,
   nonTraversableProperties,
+  AstPath,
 } from '~/types';
 import { assertNever } from '~/utils';
 
@@ -46,7 +51,7 @@ import {
   printLavaTag,
 } from '~/printer/print/lava';
 import { printChildren } from '~/printer/print/children';
-import { embed } from '~/printer/embed';
+import { embed2, embed3 } from '~/printer/embed';
 import { RawMarkupKinds } from '~/parser';
 import { getConditionalComment } from '~/parser/conditional-comment';
 
@@ -212,6 +217,24 @@ function printNode(
 
     case NodeTypes.HtmlElement: {
       return printElement(path as AstPath<HtmlElement>, options, print, args);
+    }
+
+    case NodeTypes.HtmlDanglingMarkerOpen: {
+      return printElement(
+        path as AstPath<HtmlDanglingMarkerOpen>,
+        options,
+        print,
+        args,
+      );
+    }
+
+    case NodeTypes.HtmlDanglingMarkerClose: {
+      return printElement(
+        path as AstPath<HtmlDanglingMarkerClose>,
+        options,
+        print,
+        args,
+      );
     }
 
     case NodeTypes.HtmlVoidElement: {
@@ -478,8 +501,8 @@ function printNode(
           const [firstDoc, ...rest] = printed;
           const restDoc = isEmpty(rest)
             ? ''
-            : indent([',', line, join([',', line], rest)]);
-          args = [': ', firstDoc, restDoc];
+            : indent([',', join([',', line], rest)]);
+          args = [':', firstDoc, restDoc];
         } else {
           args = [':', indent([line, join([',', line], printed)])];
         }
@@ -489,7 +512,7 @@ function printNode(
     }
 
     case NodeTypes.NamedArgument: {
-      return [node.name, ': ', path.call(print, 'value')];
+      return [node.name, ':', path.call(print, 'value')];
     }
 
     case NodeTypes.TextNode: {
@@ -567,11 +590,25 @@ function printNode(
   }
 }
 
-export const printerLavaHtml: Printer<LavaHtmlNode> & {
+export const printerLavaHtml2: Printer2<LavaHtmlNode> & {
   preprocess: any;
 } & { getVisitorKeys: any } = {
-  print: printNode,
-  embed,
+  print: printNode as any,
+  embed: embed2,
+  preprocess,
+  getVisitorKeys(node: any, nonTraversableKeys: Set<string>) {
+    return Object.keys(node).filter(
+      (key) =>
+        !nonTraversableKeys.has(key) && !nonTraversableProperties.has(key),
+    );
+  },
+};
+
+export const printerLavaHtml3: Printer3<LavaHtmlNode> & {
+  preprocess: any;
+} & { getVisitorKeys: any } = {
+  print: printNode as any,
+  embed: embed3,
   preprocess,
   getVisitorKeys(node: any, nonTraversableKeys: Set<string>) {
     return Object.keys(node).filter(

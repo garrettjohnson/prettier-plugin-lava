@@ -34,9 +34,10 @@ import { Parser } from 'prettier';
 import ohm, { Node } from 'ohm-js';
 import { toAST } from 'ohm-js/extras';
 import {
-  lavaGrammar,
-  lavaHtmlGrammar,
-  lavaHtmlGrammars,
+  LavaGrammars,
+  placeholderGrammars,
+  strictGrammars,
+  tolerantGrammars,
 } from '~/parser/grammar';
 import { LavaHTMLCSTParsingError } from '~/parser/errors';
 import { Comparators, NamedTags } from '~/types';
@@ -437,7 +438,7 @@ export interface ConcreteNumberLiteral
 export interface ConcreteLavaLiteral
   extends ConcreteBasicNode<ConcreteNodeTypes.LavaLiteral> {
   keyword: keyof typeof LavaLiteralValues;
-  value: typeof LavaLiteralValues[keyof typeof LavaLiteralValues];
+  value: (typeof LavaLiteralValues)[keyof typeof LavaLiteralValues];
 }
 
 export interface ConcreteLavaRange
@@ -505,21 +506,49 @@ const markup = (i: number) => (tokens: Node[]) => tokens[i].sourceString.trim();
 const markupTrimEnd = (i: number) => (tokens: Node[]) =>
   tokens[i].sourceString.trimEnd();
 
-export function toLavaHtmlCST(source: string): LavaHtmlCST {
-  return toCST(source, lavaHtmlGrammar, [
+export interface CSTBuildOptions {
+  /**
+   * 'strict' will disable the Lava parsing base cases. Which means that we will
+   * throw an error if we can't parse the node `markup` properly.
+   *
+   * 'tolerant' is the default case so that prettier can pretty print nodes
+   * that it doesn't understand.
+   */
+  mode: 'strict' | 'tolerant' | 'completion';
+}
+
+const Grammars: Record<CSTBuildOptions['mode'], LavaGrammars> = {
+  strict: strictGrammars,
+  tolerant: tolerantGrammars,
+  completion: placeholderGrammars,
+};
+
+export function toLavaHtmlCST(
+  source: string,
+  options: CSTBuildOptions = { mode: 'tolerant' },
+): LavaHtmlCST {
+  const grammars = Grammars[options.mode];
+  const grammar = grammars.LavaHTML;
+  return toCST(source, grammars, grammar, [
     'HelperMappings',
     'LavaMappings',
     'LavaHTMLMappings',
   ]);
 }
 
-export function toLavaCST(source: string): LavaCST {
-  return toCST(source, lavaGrammar, ['HelperMappings', 'LavaMappings']);
+export function toLavaCST(
+  source: string,
+  options: CSTBuildOptions = { mode: 'tolerant' },
+): LavaCST {
+  const grammars = Grammars[options.mode];
+  const grammar = grammars.Lava;
+  return toCST(source, grammars, grammar, ['HelperMappings', 'LavaMappings']);
 }
 
 function toCST<T>(
   source: string,
-  cstGrammar: ohm.Grammar,
+  grammars: LavaGrammars,
+  grammar: ohm.Grammar,
   cstMappings: ('HelperMappings' | 'LavaMappings' | 'LavaHTMLMappings')[],
 ): T {
   // When we switch parser, our locStart and locEnd functions must account
@@ -542,7 +571,7 @@ function toCST<T>(
     source,
   };
 
-  const res = cstGrammar.match(source, 'Node');
+  const res = grammar.match(source, 'Node');
   if (res.failed()) {
     throw new LavaHTMLCSTParsingError(res);
   }
@@ -625,6 +654,7 @@ function toCST<T>(
     },
 
     lavaTagOpen: 0,
+    lavaTagOpenStrict: 0,
     lavaTagOpenBaseCase: 0,
     lavaTagOpenRule: {
       type: ConcreteNodeTypes.LavaTagOpen,
@@ -658,6 +688,8 @@ function toCST<T>(
       locEnd,
       source,
     },
+    lavaTagBreak: 0,
+    lavaTagContinue: 0,
     lavaTagOpenTablerow: 0,
     lavaTagOpenPaginate: 0,
     lavaTagOpenPaginateMarkup: {
@@ -676,6 +708,7 @@ function toCST<T>(
     lavaTagOpenIf: 0,
     lavaTagOpenUnless: 0,
     lavaTagElsif: 0,
+    lavaTagElse: 0,
     lavaTagOpenConditionalMarkup: 0,
     condition: {
       type: ConcreteNodeTypes.Condition,
@@ -706,6 +739,7 @@ function toCST<T>(
     },
 
     lavaTag: 0,
+    lavaTagStrict: 0,
     lavaTagBaseCase: 0,
     lavaTagAssign: 0,
     lavaTagEcho: 0,
@@ -737,7 +771,7 @@ function toCST<T>(
 
     lavaTagLava: 0,
     lavaTagLavaMarkup(tagMarkup: Node) {
-      const res = lavaHtmlGrammars['LavaStatement'].match(
+      const res = grammars['LavaStatement'].match(
         tagMarkup.sourceString,
         'Node',
       );

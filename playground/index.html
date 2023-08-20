@@ -82,16 +82,16 @@
                 id="printWidthRange"
                 type="range"
                 min="0"
-                max="200"
+                max="600"
                 step="10"
-                value="120"
+                value="600"
               />
               <input
                 id="printWidthNumber"
                 type="number"
                 min="0"
                 step="10"
-                value="120"
+                value="600"
               />
             </label>
             <label
@@ -126,7 +126,7 @@
 {% for el in col %}&lt;li class=&quot;{% cycle &#039;odd&#039;, &#039;even&#039; %}&quot; id=&quot;something&quot; data-prop=&quot;some value&quot;&gt;
   &lt;div class=&quot;item-container&quot;&gt;  &lt;label&gt;{{ el.value }}&lt;/label&gt;
    {% assign alt = el.featured_image.alt | replace: &#039;vanilla&#039;, &#039;chocolate&#039; | upcase %}
-   {{ el.featured_image | image_url | image_tag }}
+   {{ el.featured_image | Attribute: 'taco', 'bell' | image_tag }}
       &lt;/div&gt;
     &lt;/li&gt; {% endfor %}
 &lt;/ul&gt;

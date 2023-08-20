@@ -1,12 +1,7 @@
-import { Parser, ParserOptions } from 'prettier';
 import { locEnd, locStart } from '~/utils';
 import { toLavaHtmlAST, LavaHtmlNode } from '~/parser/stage-2-ast';
 
-export function parse(
-  text: string,
-  _parsers: Parsers,
-  _opts: ParserOptions<LavaHtmlNode>,
-): LavaHtmlNode {
+export function parse(text: string): LavaHtmlNode {
   return toLavaHtmlAST(text);
 }
 
@@ -14,13 +9,9 @@ export const lavaHtmlAstFormat = 'lava-html-ast';
 
 export const lavaHtmlLanguageName = 'lava-html';
 
-export const lavaHtmlParser: Parser<LavaHtmlNode> = {
+export const lavaHtmlParser = {
   parse,
   astFormat: lavaHtmlAstFormat,
   locStart,
   locEnd,
 };
-
-export interface Parsers {
-  [languageName: string]: Parser;
-}

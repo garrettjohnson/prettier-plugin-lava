@@ -1,5 +1,5 @@
 const options = {
-  printWidth: 120,
+  printWidth: 600,
 };
 
 const numInputs = ['printWidth'];

@@ -70,6 +70,7 @@ import {
   ConcreteLavaTagCycleMarkup,
   ConcreteHtmlRawTag,
   ConcreteLavaRawTag,
+  LavaHtmlConcreteNode,
 } from '~/parser/stage-1-cst';
 import {
   Comparators,
@@ -153,10 +154,13 @@ export interface HasValue {
 export interface HasName {
   name: string | LavaDrop;
 }
+export interface HasCompoundName {
+  name: (TextNode | LavaNode)[];
+}
 
 export type ParentNode = Extract<
   LavaHtmlNode,
-  HasChildren | HasAttributes | HasValue | HasName
+  HasChildren | HasAttributes | HasValue | HasName | HasCompoundName
 >;
 
 export interface LavaRawTag extends ASTNode<NodeTypes.LavaRawTag> {
@@ -415,6 +419,8 @@ interface LavaVariableLookup extends ASTNode<NodeTypes.VariableLookup> {
 export type HtmlNode =
   | HtmlComment
   | HtmlElement
+  | HtmlDanglingMarkerOpen
+  | HtmlDanglingMarkerClose
   | HtmlVoidElement
   | HtmlSelfClosingElement
   | HtmlRawNode;
@@ -427,6 +433,17 @@ export interface HtmlElement extends HtmlNodeBase<NodeTypes.HtmlElement> {
   name: (TextNode | LavaDrop)[];
   children: LavaHtmlNode[];
   blockEndPosition: Position;
+}
+
+export interface HtmlDanglingMarkerOpen
+  extends HtmlNodeBase<NodeTypes.HtmlDanglingMarkerOpen> {
+  name: (TextNode | LavaDrop)[];
+}
+
+export interface HtmlDanglingMarkerClose
+  extends ASTNode<NodeTypes.HtmlDanglingMarkerClose> {
+  name: (TextNode | LavaDrop)[];
+  blockStartPosition: Position;
 }
 
 export interface HtmlSelfClosingElement
@@ -515,8 +532,20 @@ export interface ASTNode<T> {
   source: string;
 }
 
-interface AstBuildOptions {
-  mode: 'strict' | 'tolerant';
+interface ASTBuildOptions {
+  /**
+   * Whether the parser should throw if the document node isn't closed
+   */
+  allowUnclosedDocumentNode: boolean;
+
+  /**
+   * 'strict' will disable the Lava parsing base cases. Which means that we will
+   * throw an error if we can't parse the node `markup` properly.
+   *
+   * 'tolerant' is the default case so that prettier can pretty print nodes
+   * that it doesn't understand.
+   */
+  mode: 'strict' | 'tolerant' | 'completion';
 }
 
 export function isBranchedTag(node: LavaHtmlNode) {
@@ -536,12 +565,27 @@ function isLavaBranchDisguisedAsTag(
   );
 }
 
-export function toLavaAST(source: string) {
-  const cst = toLavaCST(source);
+function isConcreteLavaBranchDisguisedAsTag(
+  node: LavaHtmlConcreteNode,
+): node is ConcreteLavaNode & { name: 'else' | 'eslif' | 'when' } {
+  return (
+    node.type === ConcreteNodeTypes.LavaTag &&
+    ['else', 'eslif', 'when'].includes(node.name)
+  );
+}
+
+export function toLavaAST(
+  source: string,
+  options: ASTBuildOptions = {
+    allowUnclosedDocumentNode: true,
+    mode: 'tolerant',
+  },
+) {
+  const cst = toLavaCST(source, { mode: options.mode });
   const root: DocumentNode = {
     type: NodeTypes.Document,
     source: source,
-    children: cstToAst(cst, { mode: 'tolerant' }),
+    children: cstToAst(cst, options),
     name: '#document',
     position: {
       start: 0,
@@ -551,12 +595,18 @@ export function toLavaAST(source: string) {
   return root;
 }
 
-export function toLavaHtmlAST(source: string): DocumentNode {
-  const cst = toLavaHtmlCST(source);
+export function toLavaHtmlAST(
+  source: string,
+  options: ASTBuildOptions = {
+    allowUnclosedDocumentNode: false,
+    mode: 'tolerant',
+  },
+): DocumentNode {
+  const cst = toLavaHtmlCST(source, { mode: options.mode });
   const root: DocumentNode = {
     type: NodeTypes.Document,
     source: source,
-    children: cstToAst(cst, { mode: 'strict' }),
+    children: cstToAst(cst, options),
     name: '#document',
     position: {
       start: 0,
@@ -588,6 +638,11 @@ class ASTBuilder {
   get parent(): ParentNode | undefined {
     if (this.cursor.length == 0) return undefined;
     return deepGet<LavaTag | HtmlElement>(dropLast(1, this.cursor), this.ast);
+  }
+
+  get grandparent(): ParentNode | undefined {
+    if (this.cursor.length < 4) return undefined;
+    return deepGet<LavaTag | HtmlElement>(dropLast(3, this.cursor), this.ast);
   }
 
   open(node: LavaHtmlNode) {
@@ -682,6 +737,8 @@ function getName(
   if (!node) return null;
   switch (node.type) {
     case NodeTypes.HtmlElement:
+    case NodeTypes.HtmlDanglingMarkerOpen:
+    case NodeTypes.HtmlDanglingMarkerClose:
     case NodeTypes.HtmlSelfClosingElement:
     case ConcreteNodeTypes.HtmlTagClose:
       return node.name
@@ -698,6 +755,7 @@ function getName(
           }
         })
         .join('');
+    case NodeTypes.AttrEmpty:
     case NodeTypes.AttrUnquoted:
     case NodeTypes.AttrDoubleQuoted:
     case NodeTypes.AttrSingleQuoted:
@@ -718,14 +776,13 @@ function getName(
 
 export function cstToAst(
   cst: LavaHtmlCST | LavaCST | ConcreteAttributeNode[],
-  options: AstBuildOptions,
+  options: ASTBuildOptions,
 ): LavaHtmlNode[] {
   if (cst.length === 0) return [];
 
   const builder = buildAst(cst, options);
-  const isStrictParser = options.mode === 'strict';
 
-  if (isStrictParser && builder.cursor.length !== 0) {
+  if (!options.allowUnclosedDocumentNode && builder.cursor.length !== 0) {
     throw new LavaHTMLASTParsingError(
       `Attempting to end parsing before ${builder.parent?.type} '${getName(
         builder.parent,
@@ -741,11 +798,13 @@ export function cstToAst(
 
 function buildAst(
   cst: LavaHtmlCST | LavaCST | ConcreteAttributeNode[],
-  options: AstBuildOptions,
+  options: ASTBuildOptions,
 ) {
   const builder = new ASTBuilder(cst[0].source);
 
-  for (const node of cst) {
+  for (let i = 0; i < cst.length; i++) {
+    const node = cst[i];
+
     switch (node.type) {
       case ConcreteNodeTypes.TextNode: {
         builder.push(toTextNode(node));
@@ -797,12 +856,20 @@ function buildAst(
       }
 
       case ConcreteNodeTypes.HtmlTagOpen: {
-        builder.open(toHtmlElement(node, options));
+        if (isAcceptableDanglingMarkerOpen(builder, cst as LavaHtmlCST, i)) {
+          builder.push(toHtmlDanglingMarkerOpen(node, options));
+        } else {
+          builder.open(toHtmlElement(node, options));
+        }
         break;
       }
 
       case ConcreteNodeTypes.HtmlTagClose: {
-        builder.close(node, NodeTypes.HtmlElement);
+        if (isAcceptableDanglingMarkerClose(builder, cst as LavaHtmlCST, i)) {
+          builder.push(toHtmlDanglingMarkerClose(node, options));
+        } else {
+          builder.close(node, NodeTypes.HtmlElement);
+        }
         break;
       }
 
@@ -909,6 +976,12 @@ function buildAst(
   return builder;
 }
 
+function nameLength(names: (ConcreteLavaDrop | ConcreteTextNode)[]) {
+  const start = names.at(0)!;
+  const end = names.at(-1)!;
+  return end.locEnd - start.locStart;
+}
+
 function toAttributePosition(
   node:
     | ConcreteAttrSingleQuoted
@@ -920,12 +993,12 @@ function toAttributePosition(
     // This is bugged when there's whitespace on either side. But I don't
     // think it's worth solving.
     return {
-      start: node.locStart + node.name.length + '='.length + '"'.length,
+      start: node.locStart + nameLength(node.name) + '='.length + '"'.length,
       // name=""
       // 012345678
       // 0 + 4 + 1 + 1
       // = 6
-      end: node.locStart + node.name.length + '='.length + '"'.length,
+      end: node.locStart + nameLength(node.name) + '='.length + '"'.length,
       // name=""
       // 012345678
       // 0 + 4 + 1 + 2
@@ -941,14 +1014,14 @@ function toAttributePosition(
 
 function toAttributeValue(
   value: (ConcreteLavaNode | ConcreteTextNode)[],
-  options: AstBuildOptions,
+  options: ASTBuildOptions,
 ): (LavaNode | TextNode)[] {
   return cstToAst(value, options) as (LavaNode | TextNode)[];
 }
 
 function toAttributes(
   attrList: ConcreteAttributeNode[],
-  options: AstBuildOptions,
+  options: ASTBuildOptions,
 ): AttributeNode[] {
   return cstToAst(attrList, options) as AttributeNode[];
 }
@@ -982,7 +1055,7 @@ function lavaBranchBaseAttributes(
 
 function toLavaTag(
   node: ConcreteLavaTag | ConcreteLavaTagOpen,
-  options: AstBuildOptions & { isBlockTag: boolean },
+  options: ASTBuildOptions & { isBlockTag: boolean },
 ): LavaTag | LavaBranch {
   if (typeof node.markup !== 'string') {
     return toNamedLavaTag(node as ConcreteLavaTagNamed, options);
@@ -1003,7 +1076,7 @@ function toLavaTag(
 
 function toNamedLavaTag(
   node: ConcreteLavaTagNamed | ConcreteLavaTagOpenNamed,
-  options: AstBuildOptions,
+  options: ASTBuildOptions,
 ): LavaTagNamed | LavaBranchNamed {
   switch (node.name) {
     case NamedTags.echo: {
@@ -1515,7 +1588,7 @@ function toNamedArgument(
 
 function toHtmlElement(
   node: ConcreteHtmlTagOpen,
-  options: AstBuildOptions,
+  options: ASTBuildOptions,
 ): HtmlElement {
   return {
     type: NodeTypes.HtmlElement,
@@ -1529,9 +1602,36 @@ function toHtmlElement(
   };
 }
 
+function toHtmlDanglingMarkerOpen(
+  node: ConcreteHtmlTagOpen,
+  options: ASTBuildOptions,
+): HtmlDanglingMarkerOpen {
+  return {
+    type: NodeTypes.HtmlDanglingMarkerOpen,
+    name: cstToAst(node.name, options) as (TextNode | LavaDrop)[],
+    attributes: toAttributes(node.attrList || [], options),
+    position: position(node),
+    blockStartPosition: position(node),
+    source: node.source,
+  };
+}
+
+function toHtmlDanglingMarkerClose(
+  node: ConcreteHtmlTagClose,
+  options: ASTBuildOptions,
+): HtmlDanglingMarkerClose {
+  return {
+    type: NodeTypes.HtmlDanglingMarkerClose,
+    name: cstToAst(node.name, options) as (TextNode | LavaDrop)[],
+    position: position(node),
+    blockStartPosition: position(node),
+    source: node.source,
+  };
+}
+
 function toHtmlVoidElement(
   node: ConcreteHtmlVoidElement,
-  options: AstBuildOptions,
+  options: ASTBuildOptions,
 ): HtmlVoidElement {
   return {
     type: NodeTypes.HtmlVoidElement,
@@ -1545,7 +1645,7 @@ function toHtmlVoidElement(
 
 function toHtmlSelfClosingElement(
   node: ConcreteHtmlSelfClosingElement,
-  options: AstBuildOptions,
+  options: ASTBuildOptions,
 ): HtmlSelfClosingElement {
   return {
     type: NodeTypes.HtmlSelfClosingElement,
@@ -1564,6 +1664,89 @@ function toTextNode(node: ConcreteTextNode): TextNode {
     position: position(node),
     source: node.source,
   };
+}
+
+const MAX_NUMBER_OF_SIBLING_DANGLING_NODES = 2;
+
+function isAcceptableDanglingMarkerOpen(
+  builder: ASTBuilder,
+  cst: LavaHtmlCST,
+  currIndex: number,
+): boolean {
+  return isAcceptableDanglingMarker(
+    builder,
+    cst,
+    currIndex,
+    ConcreteNodeTypes.HtmlTagOpen,
+  );
+}
+
+function isAcceptableDanglingMarkerClose(
+  builder: ASTBuilder,
+  cst: LavaHtmlCST,
+  currIndex: number,
+): boolean {
+  return isAcceptableDanglingMarker(
+    builder,
+    cst,
+    currIndex,
+    ConcreteNodeTypes.HtmlTagClose,
+  );
+}
+
+function isAcceptableDanglingMarker(
+  builder: ASTBuilder,
+  cst: LavaHtmlCST,
+  currIndex: number,
+  nodeType: ConcreteNodeTypes.HtmlTagOpen | ConcreteNodeTypes.HtmlTagClose,
+): boolean {
+  if (!isAcceptingDanglingMarkers(builder, nodeType)) {
+    return false;
+  }
+
+  const maxIndex = Math.min(
+    cst.length,
+    currIndex + MAX_NUMBER_OF_SIBLING_DANGLING_NODES - builder.current.length,
+  );
+
+  for (let i = currIndex; i <= maxIndex; i++) {
+    if (isConcreteExceptionEnd(cst[i])) {
+      return true;
+    }
+    if (cst[i].type !== nodeType) {
+      return false;
+    }
+  }
+
+  return false;
+}
+
+const DanglingMapping = {
+  [ConcreteNodeTypes.HtmlTagOpen]: NodeTypes.HtmlDanglingMarkerOpen,
+  [ConcreteNodeTypes.HtmlTagClose]: NodeTypes.HtmlDanglingMarkerClose,
+} as const;
+
+function isAcceptingDanglingMarkers(
+  builder: ASTBuilder,
+  nodeType: ConcreteNodeTypes.HtmlTagOpen | ConcreteNodeTypes.HtmlTagClose,
+) {
+  const { parent, grandparent } = builder;
+  if (!parent || !grandparent) return false;
+  return (
+    parent.type === NodeTypes.LavaBranch &&
+    grandparent.type === NodeTypes.LavaTag &&
+    ['if', 'unless', 'case'].includes(grandparent.name) &&
+    builder.current.every((node) => node.type === DanglingMapping[nodeType])
+  );
+}
+
+// checking that is a {% else %} or {% endif %}
+function isConcreteExceptionEnd(node: LavaHtmlConcreteNode | undefined) {
+  return (
+    !node ||
+    node.type === ConcreteNodeTypes.LavaTagClose ||
+    isConcreteLavaBranchDisguisedAsTag(node)
+  );
 }
 
 function markup(name: string, markup: string) {

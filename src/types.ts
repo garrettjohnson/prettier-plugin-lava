@@ -1,5 +1,17 @@
-import { Doc, AstPath, ParserOptions } from 'prettier';
+import { Doc } from 'prettier';
+import type { AstPath as AstPath2 } from 'prettier';
+import type {
+  AstPath as AstPath3,
+  ParserOptions as ParserOptions3,
+} from 'prettier3';
 import * as AST from '~/parser/stage-2-ast';
+
+export type CommonKeys<T1, T2> = Extract<keyof T1, keyof T2>;
+export type AstPath<T = any> = Pick<
+  AstPath2<T>,
+  CommonKeys<AstPath2<T>, AstPath3<T>>
+>;
+export type ParserOptions<T = any> = ParserOptions3<T>;
 
 export interface Position {
   start: number;
@@ -17,6 +29,8 @@ export enum NodeTypes {
   HtmlDoctype = 'HtmlDoctype',
   HtmlComment = 'HtmlComment',
   HtmlElement = 'HtmlElement',
+  HtmlDanglingMarkerOpen = 'HtmlDanglingMarkerOpen',
+  HtmlDanglingMarkerClose = 'HtmlDanglingMarkerClose',
   HtmlRawNode = 'HtmlRawNode',
   AttrSingleQuoted = 'AttrSingleQuoted',
   AttrDoubleQuoted = 'AttrDoubleQuoted',
@@ -91,6 +105,8 @@ export enum Comparators {
 
 export const HtmlNodeTypes = [
   NodeTypes.HtmlElement,
+  NodeTypes.HtmlDanglingMarkerOpen,
+  NodeTypes.HtmlDanglingMarkerClose,
   NodeTypes.HtmlRawNode,
   NodeTypes.HtmlVoidElement,
   NodeTypes.HtmlSelfClosingElement,
@@ -246,6 +262,14 @@ export type LavaDrop = Augmented<AST.LavaDrop, AllAugmentations>;
 export type HtmlNode = Augmented<AST.HtmlNode, AllAugmentations>;
 export type HtmlTag = Exclude<HtmlNode, HtmlComment>;
 export type HtmlElement = Augmented<AST.HtmlElement, AllAugmentations>;
+export type HtmlDanglingMarkerOpen = Augmented<
+  AST.HtmlDanglingMarkerOpen,
+  AllAugmentations
+>;
+export type HtmlDanglingMarkerClose = Augmented<
+  AST.HtmlDanglingMarkerClose,
+  AllAugmentations
+>;
 export type HtmlVoidElement = Augmented<AST.HtmlVoidElement, AllAugmentations>;
 export type HtmlSelfClosingElement = Augmented<
   AST.HtmlSelfClosingElement,

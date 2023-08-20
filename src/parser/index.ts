@@ -1,5 +1,4 @@
 import {
-  Parsers,
   lavaHtmlParser,
   lavaHtmlAstFormat,
   lavaHtmlLanguageName,
@@ -9,6 +8,6 @@ export * from '~/parser/stage-2-ast';
 
 export { lavaHtmlLanguageName, lavaHtmlAstFormat };
 
-export const parsers: Parsers = {
+export const parsers = {
   [lavaHtmlLanguageName]: lavaHtmlParser,
 };

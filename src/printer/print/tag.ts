@@ -1,14 +1,16 @@
-import { AstPath, Doc, doc } from 'prettier';
+import { Doc, doc } from 'prettier';
 import {
-  HtmlComment,
+  AstPath,
+  HtmlDanglingMarkerOpen,
+  HtmlDanglingMarkerClose,
   HtmlElement,
   HtmlNode,
   HtmlSelfClosingElement,
-  HtmlVoidElement,
   LavaHtmlNode,
   LavaParserOptions,
   LavaPrinter,
   NodeTypes,
+  Position,
 } from '~/types';
 import {
   getLastDescendant,
@@ -34,7 +36,7 @@ import {
 const {
   builders: { breakParent, indent, join, line, softline, hardline },
 } = doc;
-const { replaceTextEndOfLine } = doc.utils as any;
+const { replaceEndOfLine } = doc.utils as any;
 
 export function printClosingTag(
   node: LavaHtmlNode,
@@ -259,6 +261,7 @@ function printAttributes(
   const node = path.getValue();
 
   if (isHtmlComment(node)) return '';
+  if (node.type === NodeTypes.HtmlDanglingMarkerClose) return '';
 
   if (node.attributes.length === 0) {
     return isSelfClosing(node)
@@ -316,7 +319,7 @@ function printAttributes(
     : line;
 
   const attributes = prettierIgnoreAttributes
-    ? replaceTextEndOfLine(
+    ? replaceEndOfLine(
         node.source.slice(
           first(node.attributes).position.start,
           last(node.attributes).position.end,
@@ -415,7 +418,10 @@ export function printOpeningTagStartMarker(node: LavaHtmlNode | undefined) {
       return '<!--';
     case NodeTypes.HtmlElement:
     case NodeTypes.HtmlSelfClosingElement:
+    case NodeTypes.HtmlDanglingMarkerOpen:
       return `<${getCompoundName(node)}`;
+    case NodeTypes.HtmlDanglingMarkerClose:
+      return `</${getCompoundName(node)}`;
     case NodeTypes.HtmlVoidElement:
     case NodeTypes.HtmlRawNode:
       return `<${node.name}`;
@@ -435,6 +441,8 @@ export function printOpeningTagEndMarker(node: LavaHtmlNode | undefined) {
     case NodeTypes.HtmlVoidElement:
       return '';
     case NodeTypes.HtmlElement:
+    case NodeTypes.HtmlDanglingMarkerOpen:
+    case NodeTypes.HtmlDanglingMarkerClose:
     case NodeTypes.HtmlRawNode:
       return '>';
     default:
@@ -443,9 +451,9 @@ export function printOpeningTagEndMarker(node: LavaHtmlNode | undefined) {
 }
 
 export function getNodeContent(
-  node: Exclude<
+  node: Extract<
     HtmlNode,
-    HtmlComment | HtmlVoidElement | HtmlSelfClosingElement
+    { blockStartPosition: Position; blockEndPosition: Position }
   >,
   options: LavaParserOptions,
 ) {
@@ -473,7 +481,13 @@ export function getNodeContent(
   return options.originalText.slice(start, end);
 }
 
-function getCompoundName(node: HtmlElement | HtmlSelfClosingElement): string {
+function getCompoundName(
+  node:
+    | HtmlElement
+    | HtmlSelfClosingElement
+    | HtmlDanglingMarkerOpen
+    | HtmlDanglingMarkerClose,
+): string {
   return node.name
     .map((part) => {
       if (part.type === NodeTypes.TextNode) {
